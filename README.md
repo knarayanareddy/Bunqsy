@@ -10,7 +10,7 @@ Built for bunq Hackathon 7.0. BUNQSY doesn't wait for prompts — it monitors yo
 
 | Capability | Detail |
 |---|---|
-| **Live account monitoring** | Heartbeat loop syncs transactions every 60 s; multi-account aware |
+| **Live account monitoring** | Heartbeat loop syncs transactions every 30 s; multi-account aware |
 | **BUNQSY Health Score** | 0–100 composite score (balance, velocity, goals, upcoming obligations) |
 | **Risk Oracle** | 7 concurrent AI sub-agents vote on risk; interventions fire when threshold is crossed |
 | **Proactive interventions** | Voice narration + UI card; plan-gated card freezes, transfers, draft cancellations |
@@ -54,7 +54,7 @@ scripts/      — Validation, seeding, and demo utilities
 ## Core systems
 
 ### Heartbeat loop
-Runs every 60 s (configurable via `HEARTBEAT_INTERVAL_MS`):
+Runs every 30 s (configurable via `HEARTBEAT_INTERVAL_MS`):
 1. Syncs all monetary accounts and new transactions into SQLite
 2. Builds `AccountSummary` for every active account (multi-account intelligence)
 3. Computes the BUNQSY Health Score from four weighted components
@@ -189,14 +189,23 @@ Five tabs: **Dashboard · Insights · Cards · Bookkeeping · Voice**
 | `GET` | `/api/bookkeeping/export/csv` | CSV export |
 | `GET` | `/api/bookkeeping/export/mt940` | MT940 bank statement export |
 | `POST` | `/api/webhook` | bunq event webhook receiver |
-| `POST` | `/api/demo/reset` | Wipe and re-seed demo data |
+| `POST` | `/api/demo/reset` | Wipe and re-seed demo data (sandbox-only 403 in prod) |
 | `POST` | `/api/demo/salary` | Simulate salary-in transaction |
 | `POST` | `/api/demo/fraud` | Simulate fraud transaction |
-| `WS` | `/ws` | Real-time events (`score_update`, `intervention`, `oracle_vote`, `tick`, `bookkeeping_update`) |
+| `GET` | `/api/health` | Liveness probe: `status, uptime, lastTick, bunq: live|offline` |
+| `WS` | `/ws` | Real-time events (`score_update`, `intervention`, `oracle_vote`, `tick`, `bookkeeping_update`, `dream_complete`) |
 
 ---
 
 ## Getting started
+
+### Which URL do I open?
+
+| URL | What it is | When to use it |
+|---|---|---|
+| `http://localhost:5173` | **Main dashboard** (`packages/frontend`) — full BUNQSY app (score, oracle, interventions, bookkeeping) | **Always** — this is the demo |
+| `https://knarayanareddy.github.io/Bunqsy/` | **Static marketing site** (`docs/`) — pre-rendered landing (non-interactive) | Judges landing page only |
+| `mock-unzip/` (run `npm run dev` inside) | **Standalone fallback** — UI without daemon (seed data only) | When `better-sqlite3` won’t compile |
 
 ### Prerequisites
 - Node.js 20+
@@ -254,16 +263,18 @@ Checks env vars, critical files, SQLite tables, RSA signing round-trip, live dae
 | `BUNQ_API_KEY` | Yes | — | bunq API key |
 | `BUNQ_SANDBOX_URL` | Yes | — | `https://public-api.sandbox.bunq.com/v1` |
 | `BUNQ_PRODUCTION_URL` | No | — | `https://api.bunq.com/v1` |
-| `BUNQ_DEVICE_DESCRIPTION` | No | `KairosFinance-Dev` | Device label in bunq |
+| `BUNQ_DEVICE_DESCRIPTION` | No | `BunqsyFinance-Dev` | Device label in bunq |
 | `ANTHROPIC_API_KEY` | Yes | — | Claude API key |
 | `ELEVENLABS_API_KEY` | No | — | Required for voice features |
 | `ELEVENLABS_VOICE_ID` | No | Sarah | TTS voice override |
 | `DB_PATH` | No | `./bunqsy.db` | SQLite database path |
 | `PORT` | No | `3001` | Daemon HTTP/WS port |
-| `HEARTBEAT_INTERVAL_MS` | No | `60000` | Tick interval in ms |
+| `HEARTBEAT_INTERVAL_MS` | No | `30000` | Tick interval in ms (30 s, CBS proactivity) |
 | `OLLAMA_URL` | No | `http://localhost:11434` | Ollama for pattern embeddings |
 | `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | Ollama embed model |
 | `WEBHOOK_PUBLIC_URL` | No | — | Public URL for bunq webhook push |
+| `FRONTEND_URL` | No | — | Allowed CORS origin in production (e.g. `https://app.bunqsy.com`) |
+| `BUNQ_OFFLINE_MODE` | No | `false` | `true` → daemon runs on seed data when sandbox is down (demo resilience) |
 | `SCORE_WEIGHT_BALANCE` | No | `0.35` | Balance component weight |
 | `SCORE_WEIGHT_VELOCITY` | No | `0.25` | Velocity component weight |
 | `SCORE_WEIGHT_GOALS` | No | `0.25` | Goals component weight |

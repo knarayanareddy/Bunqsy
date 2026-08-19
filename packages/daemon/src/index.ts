@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 import Fastify from 'fastify';
-import { getDb } from './memory/db.js';
+import { getDb, closeDb } from './memory/db.js';
 import { createSession, refreshSessionIfNeeded } from './bunq/auth.js';
 import { BunqClient } from './bunq/client.js';
 import { createOracle } from './oracle/index.js';
@@ -97,8 +97,26 @@ async function boot(): Promise<void> {
   // ── Fastify ────────────────────────────────────────────────────────────────
   const fastify = Fastify({ logger: { level: 'warn' } });
 
+  // CORS — required because frontend (5173) and daemon (3001) are different origins.
+  // Bunq audit fix: without this, hard reloads / prod deployments 403.
+  // Production origin is allow-listed via FRONTEND_URL / WEBHOOK_PUBLIC_URL; fallback to true only if neither is set (warn).
+  const prodOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.WEBHOOK_PUBLIC_URL,
+  ].filter(Boolean) as string[];
+  if (process.env.BUNQ_ENV === 'production' && prodOrigins.length === 0) {
+    console.warn('[bunqsy] BUNQ_ENV=production but no FRONTEND_URL/WEBHOOK_PUBLIC_URL set — CORS will allow all origins (not recommended)');
+  }
+  await fastify.register((await import('@fastify/cors')).default, {
+    origin: process.env.BUNQ_ENV === 'sandbox'
+      ? ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4173']
+      : (prodOrigins.length > 0 ? prodOrigins : true),
+    credentials: false,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  });
+
   // Register multipart once at the top level — shared by voice + receipt routes
-  await fastify.register(multipart, { limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
+  await fastify.register(multipart, { limits: { fileSize: 25 * 1024 * 1024, files: 1 } });
 
   let activeAID = 1;
   let webhookRegistered = false;
@@ -151,7 +169,7 @@ async function boot(): Promise<void> {
   }
 
   // ── Heartbeat ──────────────────────────────────────────────────────────────
-  const intervalMs = parseInt(process.env['HEARTBEAT_INTERVAL_MS'] ?? '60000', 10);
+  const intervalMs = parseInt(process.env['HEARTBEAT_INTERVAL_MS'] ?? '30000', 10);
 
   const stopLoop = startHeartbeatLoop(heartbeatDeps, intervalMs);
 
@@ -174,6 +192,7 @@ async function boot(): Promise<void> {
     console.log('[bunqsy] Shutting down...');
     stopLoop();
     dreamTask.stop();
+    try { closeDb(); } catch { /* ignore */ }
     void fastify.close().then(() => { process.exit(0); });
   };
 

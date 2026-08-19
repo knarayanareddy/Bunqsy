@@ -56,6 +56,38 @@ function extractCardFromItem(item: unknown): Card {
   throw new Error('Unknown card type in response');
 }
 
+// ─── Offline fallback — serves static seed when bunq sandbox is unreachable ──
+function getOfflineSeedData<T>(path: string, schema: z.ZodType<T>): T {
+  console.warn(`[bunq] OFFLINE_MODE: serving seed data for ${path}`);
+  // Minimal fixtures that pass Zod schemas — daemon continues on seed data.
+  let raw: unknown;
+  if (path.includes('/monetary-account') && !path.includes('/payment') && !path.includes('/savings-goal') && !path.includes('/schedule')) {
+    raw = {
+      Response: [{
+        MonetaryAccountBank: {
+          id: 1, status: 'ACTIVE', description: 'bunq Offline — Primary',
+          currency: 'EUR', balance: { value: '2500.00', currency: 'EUR' },
+          alias: [{ type: 'IBAN', value: 'NL00BUNQ0123456789', name: 'BUNQSY OFFLINE USER' }],
+        },
+      }],
+    };
+  } else if (path.includes('/payment')) {
+    raw = { Response: [] };
+  } else if (path.includes('/card')) {
+    raw = { Response: [] };
+  } else if (path.includes('/savings-goal')) {
+    raw = { Response: [] };
+  } else if (path.includes('/schedule')) {
+    raw = { Response: [] };
+  } else {
+    raw = { Response: [] };
+  }
+  const parsed = schema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+  // If schema still mismatches, throw a clear offline error rather than crashing with Zod issues
+  throw new Error(JSON.stringify({ phase: 'client', path, status: 503, body: 'Offline mode — no seed for this endpoint' }));
+}
+
 export class BunqClient {
   private session: BunqSession;
 
@@ -68,6 +100,11 @@ export class BunqClient {
   }
 
   async get<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+    // SRE resilience: offline demo mode when bunq sandbox is down — serve seed data
+    if (process.env.BUNQ_OFFLINE_MODE === 'true') {
+      return getOfflineSeedData<T>(path, schema);
+    }
+
     this.session = await refreshSessionIfNeeded(this.session);
 
     const baseUrl = getBunqBaseUrl();

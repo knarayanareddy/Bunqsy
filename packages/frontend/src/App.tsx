@@ -46,18 +46,26 @@ function BunqBalance({
   );
 }
 
-// ── Static data (live data comes from WS; these are demo placeholders) ────────
-
-const ACCOUNT_TILES = [
+// ── Account tiles: live data when daemon is connected, static fallback for offline/demo ──
+const ACCOUNT_TILES_FALLBACK = [
   { icon: '🏠', tileClass: 'bunq-tile-gold',   label: 'Bills',     amount: 1227.24, currency: '€' },
   { icon: '🥦', tileClass: 'bunq-tile-sky',    label: 'Groceries', amount: 250.58,  currency: '€' },
   { icon: '💰', tileClass: 'bunq-tile-green',  label: 'Savings',   amount: 2346.45, currency: '€' },
 ] as const;
 
-const GOAL_TILES = [
+const GOAL_TILES_FALLBACK = [
   { icon: '✈️', tileClass: 'bunq-tile-travel', label: 'Amsterdam Trip', amount: 680,  goal: 1000, currency: '€' },
   { icon: '🐷', tileClass: 'bunq-tile-pink',   label: 'Emergency Fund', amount: 3200, goal: undefined, currency: '€' },
 ] as const;
+
+function tileMetaForClassification(c: string): { icon: string; tileClass: string } {
+  switch (c) {
+    case 'primary': return { icon: '🏦', tileClass: 'bunq-tile-gold' };
+    case 'savings': return { icon: '🐷', tileClass: 'bunq-tile-green' };
+    case 'joint':   return { icon: '👫', tileClass: 'bunq-tile-sky' };
+    default:        return { icon: '💳', tileClass: 'bunq-tile-gold' };
+  }
+}
 
 
 const SPEND_CATS: Array<{ icon: string; bg: string; label: string; txCount: number; amount: number; pct: number }> = [
@@ -77,6 +85,12 @@ export function App(): React.JSX.Element {
   const [dreamBriefing, setDreamBriefing] = useState<DreamBriefingType | null>(null);
   const [dreamRunning, setDreamRunning] = useState(false);
   const [accountSummaries, setAccountSummaries] = useState<AccountSummary[]>([]);
+  const [weeklySpending, setWeeklySpending] = useState<Array<{ day: string; amount: number }> | null>(null);
+  const [liveGoals, setLiveGoals] = useState<Array<{ name: string; targetAmount: number; currentAmount: number }> | null>(null);
+  const [pendingReview, setPendingReview] = useState<number>(0);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    try { return localStorage.getItem('bunqsy_onboarding_dismissed') !== 'true'; } catch { return true; }
+  });
   const [showDelta, setShowDelta] = useState(false);
   const [dismissedInterventionId, setDismissedInterventionId] = useState<string | null>(null);
   const [txRefreshKey, setTxRefreshKey] = useState(0);
@@ -98,6 +112,25 @@ export function App(): React.JSX.Element {
     const timer = setInterval(() => { void fetchAccounts(); }, 30_000);
     return (): void => { cancelled = true; clearInterval(timer); };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchInsightsLite(): Promise<void> {
+      try {
+        const [insRes, statusRes] = await Promise.all([
+          fetch('/api/insights').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/bookkeeping/status').then(r => r.ok ? r.json() : null).catch(() => null),
+        ]);
+        if (cancelled) return;
+        if (insRes?.weeklySpending) setWeeklySpending(insRes.weeklySpending as Array<{ day: string; amount: number }>);
+        if (insRes?.goals) setLiveGoals(insRes.goals as Array<{ name: string; targetAmount: number; currentAmount: number }>);
+        if (statusRes?.pendingReview !== undefined) setPendingReview(statusRes.pendingReview as number);
+      } catch { /* silent */ }
+    }
+    void fetchInsightsLite();
+    const t = setInterval(() => { void fetchInsightsLite(); }, 30_000);
+    return (): void => { cancelled = true; clearInterval(t); };
+  }, [txRefreshKey]);
 
   // Auto-TTS when a new intervention arrives; also clear any prior dismissed state
   useEffect(() => {
@@ -401,6 +434,124 @@ export function App(): React.JSX.Element {
           </div>
         )}
 
+        {/* Bookkeeping banner — surfaces hidden value (Lina) */}
+        {pendingReview > 0 && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              marginBottom: '14px',
+              padding: '12px 16px',
+              borderRadius: '14px',
+              background: 'rgba(245,158,11,0.08)',
+              border: '1px solid rgba(245,158,11,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              animation: 'slideUp 0.3s ease',
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📒</span>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+              Books need attention — <strong style={{ color: '#f59e0b' }}>{pendingReview} item{pendingReview!==1?'s':''} to review</strong>
+            </span>
+            <button
+              onClick={() => setActiveTab('bookkeeping')}
+              style={{
+                marginLeft: 'auto',
+                background: '#f59e0b',
+                border: 'none',
+                borderRadius: '100px',
+                padding: '6px 14px',
+                color: '#000',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              Review now →
+            </button>
+            <button
+              onClick={() => setPendingReview(0)}
+              aria-label="Dismiss"
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '14px' }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Onboarding — first-run cold-start nudge (Lina) */}
+        {showOnboarding && accountSummaries.length === 0 && !ws.score && (
+          <div
+            role="dialog"
+            aria-label="Welcome to BUNQSY"
+            style={{
+              marginBottom: '18px',
+              padding: '20px 24px',
+              borderRadius: '18px',
+              background: 'linear-gradient(135deg, rgba(0,191,255,0.10) 0%, rgba(0,255,149,0.08) 100%)',
+              border: '1px solid rgba(0,191,255,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              animation: 'slideUp 0.4s ease',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#fff', fontFamily: "'Montserrat', sans-serif" }}>
+                👋 Welcome to BUNQSY — your financial guardian is waking up
+              </div>
+              <button
+                onClick={() => {
+                  setShowOnboarding(false);
+                  try { localStorage.setItem('bunqsy_onboarding_dismissed', 'true'); } catch {}
+                }}
+                aria-label="Dismiss onboarding"
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: '16px' }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
+              Connect your bunq account and your Health Score, oracle and Dream Mode will come alive. New here? Try the sandbox:
+              <strong style={{ color: '#00ff95' }}> Fund Sandbox (€500)</strong> or <strong style={{ color: '#00bfff' }}>Simulate Fraud</strong> to see the guardian in action.
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                onClick={async () => {
+                  setFundingState('loading');
+                  try {
+                    const r = await fetch('/api/demo/fund-sandbox', { method: 'POST' });
+                    if (!r.ok) throw new Error();
+                    setFundingState('done'); setTxRefreshKey(k => k+1);
+                    setTimeout(() => setFundingState('idle'), 6000);
+                  } catch { setFundingState('error'); setTimeout(() => setFundingState('idle'), 4000); }
+                }}
+                style={{ background: 'rgba(0,255,149,0.15)', border: '1px solid rgba(0,255,149,0.3)', borderRadius: '100px', padding: '8px 16px', color: '#00ff95', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                💶 Fund Sandbox
+              </button>
+              <button
+                onClick={() => { void sim.runFraudOracle(); }}
+                style={{ background: 'rgba(255,21,0,0.10)', border: '1px solid rgba(255,21,0,0.25)', borderRadius: '100px', padding: '8px 16px', color: '#ff6a6a', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                ⚡ Simulate Fraud
+              </button>
+              <button
+                onClick={() => {
+                  setShowOnboarding(false);
+                  try { localStorage.setItem('bunqsy_onboarding_dismissed', 'true'); } catch {}
+                }}
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '100px', padding: '8px 16px', color: 'rgba(255,255,255,0.55)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Voice Command — top center ───────────────────────────────── */}
         <div className="glass" style={{ marginBottom: '14px', padding: '16px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', maxWidth: '560px', margin: '0 auto 14px' }}>
           <span className="section-label">Voice Command</span>
@@ -423,7 +574,7 @@ export function App(): React.JSX.Element {
 
             <BUNQSYScore score={ws.score} />
 
-            {/* ── Account Tiles ── matches 01_account_tiles.png ─────────── */}
+            {/* ── Account Tiles ── live when daemon connected, fallback when offline */}
             <div style={{
               background: 'rgba(255,255,255,0.042)',
               border: '1px solid rgba(255,255,255,0.08)',
@@ -431,27 +582,56 @@ export function App(): React.JSX.Element {
               padding: '0 20px',
               overflow: 'hidden',
             }}>
-              <div className="section-label" style={{ padding: '16px 0 4px' }}>Accounts</div>
+              <div className="section-label" style={{ padding: '16px 0 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Accounts</span>
+                {accountSummaries.length > 0 && (
+                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '100px', background: 'rgba(0,255,149,0.12)', color: '#00ff95', letterSpacing: '0.08em' }}>LIVE</span>
+                )}
+              </div>
 
-              {ACCOUNT_TILES.map((tile, i) => (
-                <div key={tile.label}>
-                  <div className="bunq-account-row">
-                    <div className={`bunq-tile ${tile.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
-                      {tile.icon}
+              {(accountSummaries.length > 0 ? accountSummaries.slice(0, 3) : []).length > 0
+                ? accountSummaries.slice(0, 3).map((s, i, arr) => {
+                    const meta = tileMetaForClassification(s.classification);
+                    const liveAmt = s.balanceCents / 100;
+                    return (
+                      <div key={String(s.account.id)}>
+                        <div className="bunq-account-row">
+                          <div className={`bunq-tile ${meta.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
+                            {meta.icon}
+                          </div>
+                          <div style={{ flex: 1, fontSize: '16px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {s.label}
+                          </div>
+                          <BunqBalance amount={liveAmt} currency={s.currency} intSize={19} />
+                        </div>
+                        {i < arr.length - 1 && <div className="bunq-divider" />}
+                      </div>
+                    );
+                  })
+                : ACCOUNT_TILES_FALLBACK.map((tile, i) => (
+                    <div key={tile.label}>
+                      <div className="bunq-account-row">
+                        <div className={`bunq-tile ${tile.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
+                          {tile.icon}
+                        </div>
+                        <div style={{ flex: 1, fontSize: '18px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
+                          {tile.label}
+                        </div>
+                        <BunqBalance amount={tile.amount} currency={tile.currency} intSize={19} />
+                      </div>
+                      {i < ACCOUNT_TILES_FALLBACK.length - 1 && <div className="bunq-divider" />}
                     </div>
-                    <div style={{ flex: 1, fontSize: '18px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
-                      {tile.label}
-                    </div>
-                    <BunqBalance amount={tile.amount} currency={tile.currency} intSize={19} />
-                  </div>
-                  {i < ACCOUNT_TILES.length - 1 && <div className="bunq-divider" />}
-                </div>
-              ))}
+                  ))}
 
-              {/* Goal tiles with progress bar */}
+              {/* Goal tiles with progress bar — live when daemon has goals, fallback otherwise */}
               <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '0' }} />
 
-              {GOAL_TILES.map((tile, i) => (
+              {(liveGoals && liveGoals.length > 0 ? liveGoals.slice(0, 3).map((g, idx) => {
+                const meta = idx === 0 ? { icon: '✈️', tileClass: 'bunq-tile-travel' as const } : idx === 1 ? { icon: '🐷', tileClass: 'bunq-tile-pink' as const } : { icon: '🎯', tileClass: 'bunq-tile-gold' as const };
+                const pct = g.targetAmount > 0 ? Math.round((g.currentAmount / g.targetAmount) * 100) : 0;
+                return { label: g.name, icon: meta.icon, tileClass: meta.tileClass, amount: g.currentAmount, goal: g.targetAmount, pct };
+              }) : GOAL_TILES_FALLBACK.map(t => ({ label: t.label, icon: t.icon, tileClass: t.tileClass, amount: t.amount, goal: t.goal, pct: t.goal ? Math.round((t.amount / t.goal) * 100) : 0 }))
+              ).map((tile, i, arr) => (
                 <div key={tile.label}>
                   <div className="bunq-account-row">
                     <div className={`bunq-tile ${tile.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
@@ -465,7 +645,7 @@ export function App(): React.JSX.Element {
                         <div style={{ marginTop: '7px', height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{
                             height: '100%',
-                            width: `${Math.round((tile.amount / tile.goal) * 100)}%`,
+                            width: `${Math.min(tile.pct, 100)}%`,
                             background: '#00ff95',
                             borderRadius: '2px',
                             transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1)',
@@ -473,9 +653,9 @@ export function App(): React.JSX.Element {
                         </div>
                       )}
                     </div>
-                    <BunqBalance amount={tile.amount} currency={tile.currency} intSize={19} />
+                    <BunqBalance amount={tile.amount} currency="€" intSize={19} />
                   </div>
-                  {i < GOAL_TILES.length - 1 && <div className="bunq-divider" />}
+                  {i < arr.length - 1 && <div className="bunq-divider" />}
                 </div>
               ))}
 
@@ -610,16 +790,57 @@ export function App(): React.JSX.Element {
           {/* ── RIGHT COLUMN ────────────────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-            {/* ── Spending This Month ── matches 14_staggered_spend.png ─── */}
+            {/* ── Spending This Month ── live when daemon has data, fallback otherwise */}
             <div style={{
               background: 'rgba(255,255,255,0.042)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '22px',
               padding: '20px 20px 16px',
             }}>
-              <div className="section-label" style={{ marginBottom: '14px' }}>Spending This Month</div>
+              <div className="section-label" style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{weeklySpending && weeklySpending.some(d => d.amount > 0) ? 'Spending This Week' : 'Spending This Month'}</span>
+                {weeklySpending && weeklySpending.some(d => d.amount > 0) && (
+                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '100px', background: 'rgba(0,191,255,0.12)', color: '#00bfff', letterSpacing: '0.08em' }}>LIVE</span>
+                )}
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {SPEND_CATS.map((cat) => (
+                {weeklySpending && weeklySpending.some(d => d.amount > 0)
+                  ? (() => {
+                      const max = Math.max(...weeklySpending.map(d => d.amount), 1);
+                      const dayColors: Record<string, string> = { Mon: '#7A5200', Tue: '#6A1A8A', Wed: '#1A4480', Thu: '#1A4D2E', Fri: '#8B5A00', Sat: '#4A1A6A', Sun: '#1A3454' };
+                      const dayIcons: Record<string, string> = { Mon: '📅', Tue: '📅', Wed: '📅', Thu: '📅', Fri: '🎉', Sat: '🍽️', Sun: '☕' };
+                      return weeklySpending.map(d => {
+                        const pct = Math.max(18, Math.round((d.amount / max) * 70));
+                        return (
+                          <div key={d.day} style={{ display: 'flex', alignItems: 'center', height: '52px', gap: '0' }}>
+                            <div style={{
+                              flex: `0 0 ${pct}%`,
+                              height: '100%',
+                              borderRadius: '14px',
+                              background: dayColors[d.day] ?? '#334155',
+                              display: 'flex', alignItems: 'center',
+                              gap: '10px', padding: '0 12px',
+                              minWidth: '110px',
+                              overflow: 'hidden',
+                            }}>
+                              <div className="bunq-cat-icon">{dayIcons[d.day] ?? '💸'}</div>
+                              <div>
+                                <div style={{ fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+                                  {d.day}
+                                </div>
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', marginTop: '2px' }}>
+                                  {d.amount > 0 ? `${d.amount.toFixed(0)} spent` : 'No spend'}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', paddingRight: '4px' }}>
+                              <BunqBalance amount={d.amount} currency="€" intSize={16} />
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()
+                  : SPEND_CATS.map((cat) => (
                   <div key={cat.label} style={{ display: 'flex', alignItems: 'center', height: '62px', gap: '0' }}>
                     {/* Colored staggered bar */}
                     <div style={{

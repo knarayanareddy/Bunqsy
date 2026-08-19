@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { v4 as uuid } from 'uuid';
 import { getDb } from '../memory/db.js';
-import { isAllowedOrigin } from '../bunq/webhook.js';
+import { isAllowedOrigin, validateWebhookRequest } from '../bunq/webhook.js';
 import { getInterventionHistory, resolveIntervention } from '../memory/interventions.js';
 import { confirmPlan, executePlan, cancelPlan, createExecutionPlan } from '../bunq/execute.js';
 import { offerPatternPromotion } from '../intervention/pattern-promotion.js';
@@ -328,7 +328,8 @@ export async function registerApiRoutes(
       if (summaries.length === 0 && process.env['BUNQ_ENV'] !== 'production') {
         const accounts = await client.getAccounts();
         const primary  = accounts.find(a => a.status === 'ACTIVE');
-        const ibanAlias = primary?.alias?.find(a => a.type === 'IBAN');
+        const aliasArr = (primary as unknown as { alias?: Array<{ type?: string; name?: string }> })?.alias;
+        const ibanAlias = aliasArr?.find((a: { type?: string; name?: string }) => a.type === 'IBAN');
         const holderName = ibanAlias?.name ?? 'BUNQSY USER';
         const last4 = (primary?.id ?? 0).toString().slice(-4).padStart(4, '0');
 
@@ -457,6 +458,25 @@ export async function registerApiRoutes(
     }
   });
 
+  // ── GET /api/health — liveness probe for SRE / platform ────────────────────
+  fastify.get('/api/health', async (_req: FastifyRequest, reply: FastifyReply) => {
+    const db = getDb();
+    let dbOk = false;
+    try { db.prepare('SELECT 1').get(); dbOk = true; } catch { dbOk = false; }
+    const lastScore = db.prepare('SELECT logged_at FROM score_log ORDER BY logged_at DESC LIMIT 1').get() as { logged_at?: string } | undefined;
+    const lastTick = db.prepare('SELECT tick_at FROM tick_log ORDER BY tick_at DESC LIMIT 1').get() as { tick_at?: string } | undefined;
+    const bunqMode = process.env.BUNQ_OFFLINE_MODE === 'true' ? 'offline' : 'live';
+    return reply.send({
+      status: dbOk ? 'ok' : 'degraded',
+      uptime: process.uptime(),
+      db: dbOk ? 'ok' : 'error',
+      bunq: bunqMode,
+      lastScore: lastScore?.logged_at ?? null,
+      lastTick:  lastTick?.tick_at ?? null,
+      env: process.env.BUNQ_ENV ?? 'sandbox',
+    });
+  });
+
   // ── POST /api/webhook — bunq event webhook ─────────────────────────────────
   fastify.post('/api/webhook', async (req: FastifyRequest, reply: FastifyReply) => {
     const remoteIp =
@@ -466,6 +486,31 @@ export async function registerApiRoutes(
 
     if (!isAllowedOrigin(remoteIp)) {
       return reply.status(403).send({ error: 'Forbidden — IP not in bunq CIDR range' });
+    }
+
+    // Webhook signature verification — PSD2 compliance (always enforced in production,
+    // warn-only in sandbox where header may be absent on simulated calls)
+    try {
+      const sessionRow = getDb().prepare('SELECT server_public_key FROM sessions ORDER BY created_at DESC LIMIT 1').get() as { server_public_key: string } | undefined;
+      if (sessionRow?.server_public_key) {
+        const rawBody = JSON.stringify(req.body ?? {});
+        const headers = req.headers as Record<string, string>;
+        const hasSig = Boolean(headers['x-bunq-client-signature'] || headers['x-bunq-client-signature'.toLowerCase()]);
+        if (hasSig) {
+          const session = { serverPublicKey: sessionRow.server_public_key } as import('../bunq/auth.js').BunqSession;
+          const valid = validateWebhookRequest(rawBody, headers, session);
+          if (!valid) {
+            if (process.env.BUNQ_ENV === 'production') {
+              return reply.status(401).send({ error: 'Invalid webhook signature' });
+            }
+            console.warn('[webhook] Signature invalid in sandbox — allowing (set BUNQ_ENV=production to enforce)');
+          }
+        } else if (process.env.BUNQ_ENV === 'production') {
+          return reply.status(401).send({ error: 'Missing webhook signature' });
+        }
+      }
+    } catch (e) {
+      console.warn('[webhook] Signature check error (non-fatal):', (e as Error).message);
     }
 
     // Parse the bunq notification payload

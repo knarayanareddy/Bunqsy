@@ -27,6 +27,7 @@ export function useWebSocket(): WSState {
   const [state, setState] = useState<WSState>(INITIAL_STATE);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectDelay = useRef<number>(1000);
 
   const connect = useCallback(() => {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -34,13 +35,16 @@ export function useWebSocket(): WSState {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      reconnectDelay.current = 1000;
       setState(s => ({ ...s, connected: true }));
     };
 
     ws.onmessage = (event: MessageEvent<string>) => {
       let msg: WSMessage;
       try {
-        msg = JSON.parse(event.data) as WSMessage;
+        const raw = JSON.parse(event.data) as { type?: unknown; payload?: unknown };
+        if (!raw || typeof raw.type !== 'string') return;
+        msg = raw as WSMessage;
       } catch {
         return;
       }
@@ -75,7 +79,9 @@ export function useWebSocket(): WSState {
 
     ws.onclose = () => {
       setState(s => ({ ...s, connected: false }));
-      reconnectTimer.current = setTimeout(connect, 3000);
+      const delay = reconnectDelay.current;
+      reconnectTimer.current = setTimeout(connect, delay);
+      reconnectDelay.current = Math.min(delay * 2, 30000);
     };
 
     ws.onerror = () => {
