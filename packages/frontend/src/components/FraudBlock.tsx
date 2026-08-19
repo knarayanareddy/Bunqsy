@@ -61,7 +61,7 @@ function HoldButton({ label, color, bgColor, onComplete }: {
         flex: 1,
         position: 'relative',
         background: bgColor,
-        border: `1px solid ${color}40`,
+        border: `1px solid color-mix(in srgb, ${color} 25%, transparent)`,
         borderRadius: '14px',
         padding: '16px',
         color,
@@ -186,7 +186,7 @@ export function FraudBlock({ onAllow, onBlock, title, narration }: Props) {
 
         <div style={{
           background: 'rgba(0,0,0,0.3)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--ink-060)',
           borderRadius: '12px',
           padding: '14px',
           marginBottom: '24px',

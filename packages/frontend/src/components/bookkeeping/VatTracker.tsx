@@ -3,8 +3,8 @@ import type { VatPeriod } from '@bunqsy/shared';
 
 function statusBadge(status: VatPeriod['status']): React.JSX.Element {
   const map = {
-    OPEN:    { color: '#00bfff', bg: 'rgba(0,191,255,0.08)',  label: 'Open' },
-    FILED:   { color: '#00ff95', bg: 'rgba(0,255,149,0.08)',  label: 'Filed' },
+    OPEN:    { color: 'var(--accent-cyan)', bg: 'rgba(0,191,255,0.08)',  label: 'Open' },
+    FILED:   { color: 'var(--accent-green)', bg: 'rgba(0,255,149,0.08)',  label: 'Filed' },
     OVERDUE: { color: '#ff1500', bg: 'rgba(255,21,0,0.08)',   label: 'Overdue' },
   };
   const s = map[status];
@@ -53,7 +53,7 @@ export function VatTracker(): React.JSX.Element {
   if (loading) {
     return (
       <div style={cardStyle}>
-        <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--ink-300)', fontSize: '13px' }}>
           Loading VAT periods…
         </div>
       </div>
@@ -67,13 +67,13 @@ export function VatTracker(): React.JSX.Element {
     <div style={cardStyle}>
       <div style={{ marginBottom: '16px' }}>
         <div style={sectionLabelStyle}>BTW / VAT Tracker</div>
-        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--ink-350)', marginTop: '2px' }}>
           Netherlands quarterly returns · {currentYear}
         </div>
       </div>
 
       {currentPeriods.length === 0 ? (
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', padding: '20px 0' }}>
+        <div style={{ fontSize: '12px', color: 'var(--ink-300)', fontStyle: 'italic', padding: '20px 0' }}>
           No VAT periods computed yet. Periods are calculated automatically.
         </div>
       ) : (
@@ -84,18 +84,18 @@ export function VatTracker(): React.JSX.Element {
             return (
               <div key={key} style={{
                 padding: '14px 16px',
-                background: p.status === 'OVERDUE' ? 'rgba(255,21,0,0.04)' : 'rgba(255,255,255,0.025)',
-                border: `1px solid ${p.status === 'OVERDUE' ? 'rgba(255,21,0,0.20)' : 'rgba(255,255,255,0.06)'}`,
+                background: p.status === 'OVERDUE' ? 'rgba(255,21,0,0.04)' : 'var(--ink-025)',
+                border: `1px solid ${p.status === 'OVERDUE' ? 'rgba(255,21,0,0.20)' : 'var(--ink-060)'}`,
                 borderRadius: '14px',
                 display: 'flex', flexDirection: 'column', gap: '10px',
               }}>
                 {/* Quarter header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Q{p.quarter} {p.year}
                     </span>
-                    <span style={{ marginLeft: '8px', fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>
+                    <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--ink-300)' }}>
                       {p.periodStart} – {p.periodEnd}
                     </span>
                   </div>
@@ -105,32 +105,32 @@ export function VatTracker(): React.JSX.Element {
                 {/* VAT amounts */}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
+                    <div style={{ fontSize: '9px', color: 'var(--ink-300)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>
                       Collected (output)
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#00ff95' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-green)' }}>
                       €{p.vatCollected.toFixed(2)}
                     </div>
                     {p.vatCollected === 0 && (
-                      <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.22)', marginTop: 2 }}>salary exempt</div>
+                      <div style={{ fontSize: '8px', color: 'var(--ink-220)', marginTop: 2 }}>salary exempt</div>
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>Paid (input)</div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#ff6a00' }}>€{p.vatPaid.toFixed(2)}</div>
+                    <div style={{ fontSize: '9px', color: 'var(--ink-300)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>Paid (input)</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--hue-orange)' }}>€{p.vatPaid.toFixed(2)}</div>
                   </div>
                   <div style={{ flex: 1 }}>
                     {p.vatNetDue < 0 ? (
                       <>
                         <div style={{ fontSize: '9px', color: 'rgba(0,255,149,0.7)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>Refund Due</div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#00ff95' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-green)' }}>
                           €{Math.abs(p.vatNetDue).toFixed(2)}
                         </div>
                       </>
                     ) : (
                       <>
-                        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>Net Due</div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: p.vatNetDue > 0 ? '#ff6a00' : 'rgba(255,255,255,0.3)' }}>
+                        <div style={{ fontSize: '9px', color: 'var(--ink-300)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>Net Due</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: p.vatNetDue > 0 ? 'var(--hue-orange)' : 'var(--ink-300)' }}>
                           €{p.vatNetDue.toFixed(2)}
                         </div>
                       </>
@@ -140,9 +140,9 @@ export function VatTracker(): React.JSX.Element {
 
                 {/* Due date + file button */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--ink-300)' }}>
                     Due: {p.dueDate}
-                    {p.filedAt && <span style={{ marginLeft: '8px', color: '#00ff95' }}>Filed {p.filedAt.slice(0, 10)}</span>}
+                    {p.filedAt && <span style={{ marginLeft: '8px', color: 'var(--accent-green)' }}>Filed {p.filedAt.slice(0, 10)}</span>}
                   </div>
                   {p.status !== 'FILED' && (
                     <button
@@ -150,7 +150,7 @@ export function VatTracker(): React.JSX.Element {
                       disabled={isLoading}
                       style={{
                         background: 'rgba(0,255,149,0.08)', border: '1px solid rgba(0,255,149,0.25)',
-                        borderRadius: '100px', padding: '5px 12px', color: '#00ff95',
+                        borderRadius: '100px', padding: '5px 12px', color: 'var(--accent-green)',
                         fontSize: '10px', fontWeight: 600, cursor: 'pointer',
                         opacity: isLoading ? 0.5 : 1, fontFamily: 'inherit',
                       }}
@@ -169,13 +169,13 @@ export function VatTracker(): React.JSX.Element {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--ink-040)',
+  border: '1px solid var(--ink-080)',
   borderRadius: '20px',
   padding: '24px',
 };
 
 const sectionLabelStyle: React.CSSProperties = {
   fontSize: '11px', fontWeight: 700, letterSpacing: '0.10em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
+  textTransform: 'uppercase', color: 'var(--ink-450)',
 };

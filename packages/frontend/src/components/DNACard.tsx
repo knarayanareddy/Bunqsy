@@ -80,15 +80,15 @@ export function DNACard(): React.JSX.Element {
 }
 
 function confidenceColor(confidence: number): string {
-  if (confidence >= 0.85) return '#00ff95';
-  if (confidence >= 0.65) return '#00bfff';
-  return '#f59e0b';
+  if (confidence >= 0.85) return 'var(--accent-green)';
+  if (confidence >= 0.65) return 'var(--accent-cyan)';
+  return 'var(--hue-amber)';
 }
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: 'rgba(255,255,255,0.042)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'var(--ink-042)',
+    border: '1px solid var(--ink-080)',
     borderRadius: '22px',
     padding: '20px',
     display: 'flex',
@@ -106,19 +106,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
-    color: 'rgba(255,255,255,0.35)',
+    color: 'var(--ink-350)',
   },
   timestamp: {
     fontSize: '0.65rem',
-    color: 'rgba(255,255,255,0.22)',
+    color: 'var(--ink-220)',
   },
   dnaString: {
     fontSize: '1.1rem',
     fontWeight: 700,
-    color: '#E2E8F0',
+    color: 'var(--text-strong)',
     letterSpacing: '-0.01em',
     lineHeight: 1.3,
-    background: 'linear-gradient(135deg, #00bfff, #00ff95)',
+    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-green))',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
@@ -136,7 +136,7 @@ const styles: Record<string, React.CSSProperties> = {
   patternName: {
     width: '130px',
     fontSize: '0.7rem',
-    color: 'rgba(255,255,255,0.55)',
+    color: 'var(--ink-550)',
     flexShrink: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -145,7 +145,7 @@ const styles: Record<string, React.CSSProperties> = {
   barTrack: {
     flex: 1,
     height: '3px',
-    background: 'rgba(255,255,255,0.07)',
+    background: 'var(--ink-070)',
     borderRadius: '2px',
     overflow: 'hidden',
   },
@@ -166,13 +166,13 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column' as const,
     gap: '6px',
     paddingTop: '4px',
-    borderTop: '1px solid rgba(255,255,255,0.06)',
+    borderTop: '1px solid var(--ink-060)',
   },
   suggestLabel: {
     fontSize: '0.65rem',
     fontWeight: 600,
     letterSpacing: '0.08em',
-    color: 'rgba(255,255,255,0.28)',
+    color: 'var(--ink-280)',
     textTransform: 'uppercase' as const,
     marginBottom: '2px',
   },
@@ -185,13 +185,13 @@ const styles: Record<string, React.CSSProperties> = {
     width: '5px',
     height: '5px',
     borderRadius: '50%',
-    background: '#00bfff',
+    background: 'var(--accent-cyan)',
     flexShrink: 0,
     marginTop: '5px',
   },
   suggestionText: {
     fontSize: '0.75rem',
-    color: 'rgba(255,255,255,0.65)',
+    color: 'var(--ink-650)',
     lineHeight: 1.45,
   },
 };

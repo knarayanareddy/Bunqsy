@@ -15,7 +15,7 @@ interface Props {
 
 const SEVERITY_CFG = {
   LOW: {
-    color: '#00ff95', glow: 'rgba(0,255,149,0.22)',
+    color: 'var(--accent-green)', glow: 'rgba(0,255,149,0.22)',
     border: 'rgba(0,255,149,0.28)', bg: 'rgba(0,255,149,0.04)',
     badgeBg: 'rgba(0,255,149,0.12)', icon: '✓', label: 'LOW RISK',
   },
@@ -63,7 +63,7 @@ export function InterventionCard({ intervention, onConfirm, onDismiss }: Props):
     <div style={{
       position: 'relative',
       overflow: 'hidden',
-      background: 'rgba(11, 11, 18, 0.94)',
+      background: 'var(--glass-premium-bg)',
       backdropFilter: 'blur(48px) saturate(200%)',
       WebkitBackdropFilter: 'blur(48px) saturate(200%)',
       border: `1px solid ${s.border}`,
@@ -73,7 +73,7 @@ export function InterventionCard({ intervention, onConfirm, onDismiss }: Props):
       display: 'flex',
       flexDirection: 'column',
       gap: '16px',
-      boxShadow: `0 32px 80px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.06)`,
+      boxShadow: `var(--shadow-modal), inset 0 1px 0 var(--ink-060)`,
     }}>
 
       {/* Left severity accent bar */}
@@ -132,11 +132,11 @@ export function InterventionCard({ intervention, onConfirm, onDismiss }: Props):
         {/* Narration — styled as a bunq notification body (ref: 18_security_limited_card.png) */}
         <div style={{
           background: 'rgba(0,0,0,0.32)',
-          border: `1px solid rgba(255,255,255,0.07)`,
+          border: `1px solid var(--ink-070)`,
           borderLeft: `3px solid ${s.color}`,
           borderRadius: '0 14px 14px 0',
           padding: '14px 16px',
-          fontSize: '13px', color: 'rgba(255,255,255,0.74)', lineHeight: 1.65,
+          fontSize: '13px', color: 'var(--ink-740)', lineHeight: 1.65,
         }}>
           {intervention.narration}
         </div>
@@ -144,7 +144,7 @@ export function InterventionCard({ intervention, onConfirm, onDismiss }: Props):
         {/* Explainability footer */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '5px',
-          fontSize: '10px', color: 'rgba(255,255,255,0.24)',
+          fontSize: '10px', color: 'var(--ink-240)',
           marginTop: '-6px',
         }}>
           <span>🔍</span>
@@ -158,7 +158,7 @@ export function InterventionCard({ intervention, onConfirm, onDismiss }: Props):
             disabled={confirming}
             style={{
               flex: 1, border: 'none', borderRadius: '14px', padding: '14px',
-              background: s.color, color: '#000000',
+              background: s.color, color: 'var(--text-on-bright)',
               fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em',
               cursor: confirming ? 'not-allowed' : 'pointer',
               opacity: confirming ? 0.75 : 1,
@@ -171,9 +171,9 @@ export function InterventionCard({ intervention, onConfirm, onDismiss }: Props):
             onClick={onDismiss}
             disabled={confirming}
             style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
+              background: 'var(--ink-060)', border: '1px solid var(--ink-100)',
               borderRadius: '14px', padding: '14px 20px',
-              color: 'rgba(255,255,255,0.48)', fontSize: '14px', fontWeight: 600,
+              color: 'var(--ink-480)', fontSize: '14px', fontWeight: 600,
               cursor: confirming ? 'not-allowed' : 'pointer',
             }}
           >

@@ -28,7 +28,7 @@ export function DreamTrigger({ running, onTrigger }: DreamTriggerProps) {
         border: `1px solid ${running ? 'rgba(0,191,255,0.18)' : 'rgba(0,191,255,0.32)'}`,
         borderRadius: '100px',
         padding: '7px 16px',
-        color: running ? '#00bfff' : '#00bfff',
+        color: running ? 'var(--accent-cyan)' : 'var(--accent-cyan)',
         fontSize: '12px',
         fontWeight: 600,
         fontFamily: "'Montserrat', sans-serif",
@@ -52,7 +52,7 @@ export function DreamTrigger({ running, onTrigger }: DreamTriggerProps) {
           bottom: 0,
           left: 0,
           height: '2px',
-          background: 'linear-gradient(90deg, #00bfff, #00ff95)',
+          background: 'linear-gradient(90deg, var(--accent-cyan), var(--accent-green))',
           animation: 'loadingBar 3s ease infinite',
           width: '100%',
         }} />
@@ -89,13 +89,13 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
       transition: 'opacity 0.3s ease',
     }}>
       <div style={{
-        background: 'linear-gradient(145deg, #0a0a0a, #0d0d12)',
+        background: 'var(--modal-grad)',
         border: '1px solid rgba(0,191,255,0.18)',
         borderRadius: '28px',
         padding: '40px',
         maxWidth: '560px',
         width: '100%',
-        boxShadow: '0 0 80px rgba(0,191,255,0.12), 0 40px 80px rgba(0,0,0,0.85)',
+        boxShadow: '0 0 80px var(--accent-cyan-glow), var(--shadow-modal)',
         transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
         transition: 'transform 0.4s ease',
         maxHeight: '90vh',
@@ -104,7 +104,7 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
         {/* Stars background effect */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{ fontSize: '48px', marginBottom: '8px' }}>🌙</div>
-          <div style={{ fontSize: '11px', color: '#00bfff', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px', fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px', fontFamily: "'Montserrat', sans-serif" }}>
             DREAM MODE COMPLETE
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#F1F5F9' }}>
@@ -123,10 +123,10 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
           padding: '20px',
           marginBottom: '20px',
           fontSize: '14px',
-          color: '#CBD5E1',
+          color: 'var(--text-soft)',
           lineHeight: 1.7,
           fontStyle: 'italic',
-          borderLeft: '3px solid #00bfff',
+          borderLeft: '3px solid var(--accent-cyan)',
         }}>
           "{briefing.briefingText}"
         </div>
@@ -147,8 +147,8 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
           }}>
             <div style={{ fontSize: '28px' }}>🧬</div>
             <div>
-              <div style={{ fontSize: '11px', color: '#00bfff', fontWeight: 600, marginBottom: '3px' }}>Identified from your patterns</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#E2E8F0' }}>
+              <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 600, marginBottom: '3px' }}>Identified from your patterns</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-strong)' }}>
                 {briefing.dnaCard}
               </div>
             </div>
@@ -166,8 +166,8 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
                 display: 'flex',
                 gap: '12px',
                 padding: '14px 16px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'var(--ink-030)',
+                border: '1px solid var(--ink-060)',
                 borderRadius: '12px',
               }}>
                 <div style={{
@@ -181,13 +181,13 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
                   justifyContent: 'center',
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#00bfff',
+                  color: 'var(--accent-cyan)',
                   flexShrink: 0,
                   marginTop: '1px',
                 }}>
                   {i + 1}
                 </div>
-                <div style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.5 }}>{s}</div>
+                <div style={{ fontSize: '13px', color: 'var(--hue-slate)', lineHeight: 1.5 }}>{s}</div>
               </div>
             ))}
           </div>
@@ -198,11 +198,11 @@ export function DreamBriefingModal({ briefing, onClose }: BriefingModalProps) {
           onClick={handleClose}
           style={{
             width: '100%',
-            background: 'linear-gradient(135deg, #00bfff, #00ff95)',
+            background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-green))',
             border: 'none',
             borderRadius: '14px',
             padding: '16px',
-            color: '#fff',
+            color: 'var(--text-primary)',
             fontSize: '15px',
             fontWeight: 700,
             cursor: 'pointer',

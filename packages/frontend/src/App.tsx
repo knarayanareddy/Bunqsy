@@ -19,29 +19,65 @@ import { ExportModal } from './components/bookkeeping/ExportModal.js';
 import { BookkeepingStatus } from './components/bookkeeping/BookkeepingStatus.js';
 import { InsightsScreen } from './components/InsightsScreen.js';
 import { CardsPanel } from './components/CardsPanel.js';
+import { ThemeToggle } from './components/ThemeToggle.js';
 
 // ── Superscript-decimal currency (matches authentic bunq visual language) ─────
+
+/**
+ * ISO-4217 → the glyph bunq actually prints on the account tile (audit §1:
+ * "Currency symbols sourced from the specific local account"). Anything we
+ * don't know falls through as the raw code, which is what bunq does too.
+ */
+const CURRENCY_SYMBOL: Record<string, string> = {
+  EUR: '€',  USD: '$',   GBP: '£',   JPY: '¥',
+  AUD: 'A$', CAD: 'C$',  NZD: 'NZ$', HKD: 'HK$', SGD: 'S$',
+  CHF: 'CHF', SEK: 'kr', NOK: 'kr',  DKK: 'kr',
+  PLN: 'zł', CZK: 'Kč',  HUF: 'Ft',  RON: 'lei',
+  TRY: '₺',  INR: '₹',   BRL: 'R$',  ZAR: 'R',
+};
+
+/** Currencies bunq renders without a decimal part. */
+const ZERO_DECIMAL = new Set(['JPY', 'KRW', 'ISK', 'CLP', 'VND']);
+
+export function currencyGlyph(currency: string): string {
+  const code = currency.trim().toUpperCase();
+  return CURRENCY_SYMBOL[code] ?? currency.trim();
+}
+
 function BunqBalance({
   amount,
   currency = '€',
   intSize = 22,
 }: {
   amount: number;
+  /** ISO code ("EUR") or a ready-made glyph ("€") — both are accepted. */
   currency?: string;
   intSize?: number;
 }): React.JSX.Element {
-  const [intStr, decStr] = Math.abs(amount).toFixed(2).split('.');
-  const formatted = parseInt(intStr, 10).toLocaleString('en-US');
-  const decSize = Math.round(intSize * 0.53);
+  const code     = currency.trim().toUpperCase();
+  const glyph    = currencyGlyph(currency);
+  const decimals = ZERO_DECIMAL.has(code) ? 0 : 2;
+
+  const [intStr, decStr] = Math.abs(amount).toFixed(decimals).split('.');
+  const formatted = parseInt(intStr!, 10).toLocaleString('en-US');
+  const decSize   = Math.round(intSize * 0.53);
   const topOffset = Math.round(intSize * 0.1);
+  // Real money can be negative — bunq shows a true minus sign, not a hyphen.
+  const sign = amount < 0 ? '\u2212' : '';
+
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'flex-start', lineHeight: 1 }}>
-      <span style={{ fontSize: `${intSize}px`, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1 }}>
-        {currency}&nbsp;{formatted}.
+    <span
+      className="bunq-bal"
+      aria-label={`${sign ? 'minus ' : ''}${formatted}${decStr ? `.${decStr}` : ''} ${code}`}
+    >
+      <span className="bunq-bal-int" style={{ fontSize: `${intSize}px`, letterSpacing: '-0.02em' }}>
+        {sign}{glyph}&nbsp;{formatted}{decStr ? '.' : ''}
       </span>
-      <span style={{ fontSize: `${decSize}px`, fontWeight: 700, color: '#fff', lineHeight: 1, marginTop: `${topOffset}px` }}>
-        {decStr}
-      </span>
+      {decStr && (
+        <span className="bunq-bal-dec" style={{ fontSize: `${decSize}px`, marginTop: `${topOffset}px` }}>
+          {decStr}
+        </span>
+      )}
     </span>
   );
 }
@@ -194,9 +230,9 @@ export function App(): React.JSX.Element {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(9,9,9,0.92)',
+        background: 'var(--bg-header)',
         backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--ink-060)',
       }}>
         <div style={{
           maxWidth: '1400px', margin: '0 auto', padding: '0 28px',
@@ -209,12 +245,12 @@ export function App(): React.JSX.Element {
               <div style={{
                 fontSize: '17px', fontWeight: 800, letterSpacing: '-0.03em',
                 fontFamily: "'Montserrat', sans-serif",
-                background: 'linear-gradient(135deg, #00bfff, #00ff95)',
+                background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-green))',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>
                 BUNQSY
               </div>
-              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.26)', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, marginTop: '2px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--ink-260)', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, marginTop: '2px' }}>
                 Financial Guardian
               </div>
             </div>
@@ -223,15 +259,17 @@ export function App(): React.JSX.Element {
 
           {/* Nav actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeToggle />
+
             <div style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '6px 12px', borderRadius: '100px',
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-              fontSize: '11px', color: 'rgba(255,255,255,0.32)',
+              background: 'var(--ink-030)', border: '1px solid var(--ink-070)',
+              fontSize: '11px', color: 'var(--ink-320)',
             }}>
               <div style={{
                 width: '6px', height: '6px', borderRadius: '50%',
-                background: ws.connected ? '#00ff95' : '#ff3b30',
+                background: ws.connected ? 'var(--accent-green)' : '#ff3b30',
                 boxShadow: ws.connected ? '0 0 7px rgba(0,255,149,0.9)' : '0 0 7px rgba(255,59,48,0.9)',
                 animation: ws.connected ? 'pulse 2s infinite' : 'none',
               }} />
@@ -243,9 +281,9 @@ export function App(): React.JSX.Element {
               disabled={sim.running}
               style={{
                 background: sim.running ? 'transparent' : 'rgba(0,255,149,0.08)',
-                border: `1px solid ${sim.running ? 'rgba(255,255,255,0.07)' : 'rgba(0,255,149,0.28)'}`,
+                border: `1px solid ${sim.running ? 'var(--ink-070)' : 'rgba(0,255,149,0.28)'}`,
                 borderRadius: '100px', padding: '7px 16px',
-                color: sim.running ? 'rgba(255,255,255,0.18)' : '#00ff95',
+                color: sim.running ? 'var(--ink-180)' : 'var(--accent-green)',
                 fontSize: '12px', fontWeight: 600, cursor: sim.running ? 'not-allowed' : 'pointer',
                 fontFamily: "'Montserrat', sans-serif", letterSpacing: '0.02em',
               }}
@@ -278,9 +316,9 @@ export function App(): React.JSX.Element {
 
             <div style={{
               width: '34px', height: '34px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #00bfff, #00ff95)',
+              background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-green))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '13px', fontWeight: 800, color: '#000', cursor: 'pointer',
+              fontSize: '13px', fontWeight: 800, color: 'var(--text-on-bright)', cursor: 'pointer',
               fontFamily: "'Montserrat', sans-serif",
             }}>K</div>
           </div>
@@ -289,8 +327,8 @@ export function App(): React.JSX.Element {
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
       <div style={{
-        background: 'rgba(9,9,9,0.80)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)', zIndex: 99, position: 'sticky', top: '72px',
+        background: 'var(--bg-header-alt)', backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--ink-050)', zIndex: 99, position: 'sticky', top: '72px',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px', display: 'flex', gap: '0' }}>
           {([
@@ -304,10 +342,10 @@ export function App(): React.JSX.Element {
               onClick={() => setActiveTab(tab)}
               style={{
                 background: 'none', border: 'none',
-                borderBottom: activeTab === tab ? '2px solid #00bfff' : '2px solid transparent',
+                borderBottom: activeTab === tab ? '2px solid var(--accent-cyan)' : '2px solid transparent',
                 padding: '14px 20px', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif",
                 fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-                color: activeTab === tab ? '#00bfff' : 'rgba(255,255,255,0.35)',
+                color: activeTab === tab ? 'var(--accent-cyan)' : 'var(--ink-350)',
                 transition: 'all 0.2s', marginBottom: '-1px',
               }}
             >
@@ -374,19 +412,19 @@ export function App(): React.JSX.Element {
             <span style={{
               fontSize: '1rem',
               fontWeight: 800,
-              color: ws.scoreDelta.delta >= 0 ? '#00ff95' : '#ef4444',
+              color: ws.scoreDelta.delta >= 0 ? 'var(--accent-green)' : '#ef4444',
               flexShrink: 0,
             }}>
               {ws.scoreDelta.delta >= 0 ? `+${ws.scoreDelta.delta}` : ws.scoreDelta.delta}
             </span>
-            <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--ink-700)', lineHeight: 1.4 }}>
               {ws.scoreDelta.reason}
             </span>
             <button
               onClick={() => setShowDelta(false)}
               style={{
                 marginLeft: 'auto', background: 'none', border: 'none',
-                color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: '0.7rem', flexShrink: 0,
+                color: 'var(--ink-250)', cursor: 'pointer', fontSize: '0.7rem', flexShrink: 0,
               }}
             >✕</button>
           </div>
@@ -452,18 +490,18 @@ export function App(): React.JSX.Element {
             }}
           >
             <span style={{ fontSize: '18px' }}>📒</span>
-            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
-              Books need attention — <strong style={{ color: '#f59e0b' }}>{pendingReview} item{pendingReview!==1?'s':''} to review</strong>
+            <span style={{ fontSize: '13px', color: 'var(--ink-850)', fontWeight: 500 }}>
+              Books need attention — <strong style={{ color: 'var(--hue-amber)' }}>{pendingReview} item{pendingReview!==1?'s':''} to review</strong>
             </span>
             <button
               onClick={() => setActiveTab('bookkeeping')}
               style={{
                 marginLeft: 'auto',
-                background: '#f59e0b',
+                background: 'var(--hue-amber)',
                 border: 'none',
                 borderRadius: '100px',
                 padding: '6px 14px',
-                color: '#000',
+                color: 'var(--text-on-bright)',
                 fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -475,7 +513,7 @@ export function App(): React.JSX.Element {
             <button
               onClick={() => setPendingReview(0)}
               aria-label="Dismiss"
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '14px' }}
+              style={{ background: 'none', border: 'none', color: 'var(--ink-300)', cursor: 'pointer', fontSize: '14px' }}
             >
               ✕
             </button>
@@ -500,7 +538,7 @@ export function App(): React.JSX.Element {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#fff', fontFamily: "'Montserrat', sans-serif" }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
                 👋 Welcome to BUNQSY — your financial guardian is waking up
               </div>
               <button
@@ -509,14 +547,14 @@ export function App(): React.JSX.Element {
                   try { localStorage.setItem('bunqsy_onboarding_dismissed', 'true'); } catch {}
                 }}
                 aria-label="Dismiss onboarding"
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: '16px' }}
+                style={{ background: 'none', border: 'none', color: 'var(--ink-350)', cursor: 'pointer', fontSize: '16px' }}
               >
                 ✕
               </button>
             </div>
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '13px', color: 'var(--ink-650)', lineHeight: 1.5 }}>
               Connect your bunq account and your Health Score, oracle and Dream Mode will come alive. New here? Try the sandbox:
-              <strong style={{ color: '#00ff95' }}> Fund Sandbox (€500)</strong> or <strong style={{ color: '#00bfff' }}>Simulate Fraud</strong> to see the guardian in action.
+              <strong style={{ color: 'var(--accent-green)' }}> Fund Sandbox (€500)</strong> or <strong style={{ color: 'var(--accent-cyan)' }}>Simulate Fraud</strong> to see the guardian in action.
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button
@@ -529,7 +567,7 @@ export function App(): React.JSX.Element {
                     setTimeout(() => setFundingState('idle'), 6000);
                   } catch { setFundingState('error'); setTimeout(() => setFundingState('idle'), 4000); }
                 }}
-                style={{ background: 'rgba(0,255,149,0.15)', border: '1px solid rgba(0,255,149,0.3)', borderRadius: '100px', padding: '8px 16px', color: '#00ff95', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: 'rgba(0,255,149,0.15)', border: '1px solid rgba(0,255,149,0.3)', borderRadius: '100px', padding: '8px 16px', color: 'var(--accent-green)', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 💶 Fund Sandbox
               </button>
@@ -544,7 +582,7 @@ export function App(): React.JSX.Element {
                   setShowOnboarding(false);
                   try { localStorage.setItem('bunqsy_onboarding_dismissed', 'true'); } catch {}
                 }}
-                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '100px', padding: '8px 16px', color: 'rgba(255,255,255,0.55)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                style={{ background: 'transparent', border: '1px solid var(--ink-120)', borderRadius: '100px', padding: '8px 16px', color: 'var(--ink-550)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
               >
                 Got it
               </button>
@@ -576,8 +614,8 @@ export function App(): React.JSX.Element {
 
             {/* ── Account Tiles ── live when daemon connected, fallback when offline */}
             <div style={{
-              background: 'rgba(255,255,255,0.042)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--ink-042)',
+              border: '1px solid var(--ink-080)',
               borderRadius: '22px',
               padding: '0 20px',
               overflow: 'hidden',
@@ -585,7 +623,7 @@ export function App(): React.JSX.Element {
               <div className="section-label" style={{ padding: '16px 0 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Accounts</span>
                 {accountSummaries.length > 0 && (
-                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '100px', background: 'rgba(0,255,149,0.12)', color: '#00ff95', letterSpacing: '0.08em' }}>LIVE</span>
+                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '100px', background: 'rgba(0,255,149,0.12)', color: 'var(--accent-green)', letterSpacing: '0.08em' }}>LIVE</span>
                 )}
               </div>
 
@@ -599,7 +637,7 @@ export function App(): React.JSX.Element {
                           <div className={`bunq-tile ${meta.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
                             {meta.icon}
                           </div>
-                          <div style={{ flex: 1, fontSize: '16px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ flex: 1, fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {s.label}
                           </div>
                           <BunqBalance amount={liveAmt} currency={s.currency} intSize={19} />
@@ -614,7 +652,7 @@ export function App(): React.JSX.Element {
                         <div className={`bunq-tile ${tile.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
                           {tile.icon}
                         </div>
-                        <div style={{ flex: 1, fontSize: '18px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
+                        <div style={{ flex: 1, fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
                           {tile.label}
                         </div>
                         <BunqBalance amount={tile.amount} currency={tile.currency} intSize={19} />
@@ -624,7 +662,7 @@ export function App(): React.JSX.Element {
                   ))}
 
               {/* Goal tiles with progress bar — live when daemon has goals, fallback otherwise */}
-              <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '0' }} />
+              <div style={{ height: '1px', background: 'var(--ink-070)', margin: '0' }} />
 
               {(liveGoals && liveGoals.length > 0 ? liveGoals.slice(0, 3).map((g, idx) => {
                 const meta = idx === 0 ? { icon: '✈️', tileClass: 'bunq-tile-travel' as const } : idx === 1 ? { icon: '🐷', tileClass: 'bunq-tile-pink' as const } : { icon: '🎯', tileClass: 'bunq-tile-gold' as const };
@@ -638,15 +676,15 @@ export function App(): React.JSX.Element {
                       {tile.icon}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '17px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
+                      <div style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
                         {tile.label}
                       </div>
                       {tile.goal !== undefined && (
-                        <div style={{ marginTop: '7px', height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ marginTop: '7px', height: '3px', background: 'var(--ink-100)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{
                             height: '100%',
                             width: `${Math.min(tile.pct, 100)}%`,
-                            background: '#00ff95',
+                            background: 'var(--accent-green)',
                             borderRadius: '2px',
                             transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1)',
                           }} />
@@ -676,8 +714,8 @@ export function App(): React.JSX.Element {
             {/* ── Multi-Account Intelligence (Phase 14) ─────────────────── */}
             {accountSummaries.length > 0 && (
               <div style={{
-                background: 'rgba(255,255,255,0.042)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--ink-042)',
+                border: '1px solid var(--ink-080)',
                 borderRadius: '22px',
                 padding: '20px',
                 animation: 'slideUp 0.4s ease',
@@ -688,7 +726,7 @@ export function App(): React.JSX.Element {
                     marginLeft: '8px', fontSize: '9px', fontWeight: 700,
                     padding: '2px 7px', borderRadius: '100px',
                     background: 'rgba(0,191,255,0.12)',
-                    color: '#00bfff', letterSpacing: '0.1em',
+                    color: 'var(--accent-cyan)', letterSpacing: '0.1em',
                     verticalAlign: 'middle',
                   }}>LIVE</span>
                 </div>
@@ -713,15 +751,15 @@ export function App(): React.JSX.Element {
                       <div key={s.account.id} style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
                         padding: '12px 14px',
-                        background: 'rgba(255,255,255,0.025)',
-                        border: `1px solid ${col}28`,
+                        background: 'var(--ink-025)',
+                        border: `1px solid color-mix(in srgb, ${col} 16%, transparent)`,
                         borderLeft: `3px solid ${col}`,
                         borderRadius: '14px',
                         position: 'relative',
                       }}>
                         <div style={{
                           width: '40px', height: '40px', borderRadius: '12px',
-                          background: `${col}22`,
+                          background: `color-mix(in srgb, ${col} 13%, transparent)`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '20px', flexShrink: 0,
                         }}>
@@ -729,12 +767,12 @@ export function App(): React.JSX.Element {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#E2E8F0', letterSpacing: '-0.01em' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-strong)', letterSpacing: '-0.01em' }}>
                               {s.label}
                             </span>
                             <span style={{
                               fontSize: '8px', fontWeight: 700, padding: '1px 5px',
-                              borderRadius: '4px', background: `${col}22`, color: col,
+                              borderRadius: '4px', background: `color-mix(in srgb, ${col} 13%, transparent)`, color: col,
                               letterSpacing: '0.08em', textTransform: 'uppercase',
                             }}>
                               {s.classification}
@@ -744,19 +782,19 @@ export function App(): React.JSX.Element {
                             )}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.32)' }}>
+                            <span style={{ fontSize: '10px', color: 'var(--ink-320)' }}>
                               {s.recentTxCount} tx · 7d
                             </span>
                             {s.goalLinked && s.goalProgress !== null && (
-                              <div style={{ flex: 1, maxWidth: '80px', height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                              <div style={{ flex: 1, maxWidth: '80px', height: '3px', background: 'var(--ink-080)', borderRadius: '2px', overflow: 'hidden' }}>
                                 <div style={{
                                   height: '100%', width: `${Math.round(s.goalProgress * 100)}%`,
-                                  background: '#00ff95', borderRadius: '2px',
+                                  background: 'var(--accent-green)', borderRadius: '2px',
                                 }} />
                               </div>
                             )}
                             {s.goalLinked && s.goalProgress !== null && (
-                              <span style={{ fontSize: '10px', color: '#00ff95', fontWeight: 600 }}>
+                              <span style={{ fontSize: '10px', color: 'var(--accent-green)', fontWeight: 600 }}>
                                 {Math.round(s.goalProgress * 100)}%
                               </span>
                             )}
@@ -769,10 +807,10 @@ export function App(): React.JSX.Element {
                 </div>
                 <div style={{
                   marginTop: '12px', paddingTop: '12px',
-                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  borderTop: '1px solid var(--ink-060)',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.32)' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--ink-320)' }}>
                     Total across {accountSummaries.length} account{accountSummaries.length !== 1 ? 's' : ''}
                   </span>
                   <BunqBalance
@@ -792,15 +830,15 @@ export function App(): React.JSX.Element {
 
             {/* ── Spending This Month ── live when daemon has data, fallback otherwise */}
             <div style={{
-              background: 'rgba(255,255,255,0.042)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--ink-042)',
+              border: '1px solid var(--ink-080)',
               borderRadius: '22px',
               padding: '20px 20px 16px',
             }}>
               <div className="section-label" style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{weeklySpending && weeklySpending.some(d => d.amount > 0) ? 'Spending This Week' : 'Spending This Month'}</span>
                 {weeklySpending && weeklySpending.some(d => d.amount > 0) && (
-                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '100px', background: 'rgba(0,191,255,0.12)', color: '#00bfff', letterSpacing: '0.08em' }}>LIVE</span>
+                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '100px', background: 'rgba(0,191,255,0.12)', color: 'var(--accent-cyan)', letterSpacing: '0.08em' }}>LIVE</span>
                 )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -825,10 +863,10 @@ export function App(): React.JSX.Element {
                             }}>
                               <div className="bunq-cat-icon">{dayIcons[d.day] ?? '💸'}</div>
                               <div>
-                                <div style={{ fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+                                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-on-accent)', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                                   {d.day}
                                 </div>
-                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', marginTop: '2px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--ink-550)', marginTop: '2px' }}>
                                   {d.amount > 0 ? `${d.amount.toFixed(0)} spent` : 'No spend'}
                                 </div>
                               </div>
@@ -855,10 +893,10 @@ export function App(): React.JSX.Element {
                     }}>
                       <div className="bunq-cat-icon">{cat.icon}</div>
                       <div>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-on-accent)', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                           {cat.label}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', marginTop: '2px' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--ink-550)', marginTop: '2px' }}>
                           {cat.txCount} transaction{cat.txCount !== 1 ? 's' : ''}
                         </div>
                       </div>
@@ -881,8 +919,8 @@ export function App(): React.JSX.Element {
 
             {/* ── Detected Patterns ──────────────────────────────────────── */}
             <div style={{
-              background: 'rgba(255,255,255,0.042)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--ink-042)',
+              border: '1px solid var(--ink-080)',
               borderRadius: '22px',
               padding: '20px',
             }}>
@@ -890,20 +928,20 @@ export function App(): React.JSX.Element {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
                   { pattern: 'Weekend dining spike',  confidence: 87, icon: '🍽️', color: '#FF8C00' },
-                  { pattern: 'Monthly salary — 25th', confidence: 96, icon: '💼', color: '#00ff95' },
-                  { pattern: 'Streaming sub spike',   confidence: 91, icon: '📺', color: '#00bfff' },
+                  { pattern: 'Monthly salary — 25th', confidence: 96, icon: '💼', color: 'var(--accent-green)' },
+                  { pattern: 'Streaming sub spike',   confidence: 91, icon: '📺', color: 'var(--accent-cyan)' },
                 ].map((p) => (
                   <div key={p.pattern} style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
                     padding: '10px 12px',
-                    background: 'rgba(255,255,255,0.025)',
-                    border: '1px solid rgba(255,255,255,0.05)',
+                    background: 'var(--ink-025)',
+                    border: '1px solid var(--ink-050)',
                     borderRadius: '12px',
                   }}>
                     <span style={{ fontSize: '16px' }}>{p.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '11px', color: '#CBD5E1', fontWeight: 500, marginBottom: '5px' }}>{p.pattern}</div>
-                      <div style={{ height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-soft)', fontWeight: 500, marginBottom: '5px' }}>{p.pattern}</div>
+                      <div style={{ height: '3px', background: 'var(--ink-070)', borderRadius: '2px', overflow: 'hidden' }}>
                         <div style={{
                           height: '100%', width: `${p.confidence}%`,
                           background: p.color, borderRadius: '2px',
@@ -924,15 +962,15 @@ export function App(): React.JSX.Element {
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer style={{
-        borderTop: '1px solid rgba(255,255,255,0.05)',
+        borderTop: '1px solid var(--ink-050)',
         padding: '16px 28px', fontSize: '11px',
-        color: 'rgba(255,255,255,0.16)', position: 'relative', zIndex: 1,
+        color: 'var(--ink-160)', position: 'relative', zIndex: 1,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <span style={{
             fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: '12px',
-            background: 'linear-gradient(135deg,#00bfff,#00ff95)',
+            background: 'linear-gradient(135deg,var(--accent-cyan),var(--accent-green))',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>BUNQSY</span>
           <span>bunq Hackathon 7.0</span>

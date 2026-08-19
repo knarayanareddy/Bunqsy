@@ -450,7 +450,7 @@ const previewStyles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#000',
+    background: 'var(--bg-base)',
   },
   img: {
     width: '100%',
@@ -616,7 +616,7 @@ const lineStyles: Record<string, React.CSSProperties> = {
     width: 48,
     height: 3,
     borderRadius: 2,
-    background: 'rgba(255,255,255,0.08)',
+    background: 'var(--ink-080)',
     overflow: 'hidden',
   },
   barFill: {

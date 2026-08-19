@@ -7,18 +7,46 @@
 }
 
 :root {
-  /* ── bunq core palette ──────────────────────────────────────────────────── */
+  /* ── bunq core palette — DARK (default) ─────────────────────────────────── */
   --bg-base:         #000000;
   --bg-surface:      rgba(255, 255, 255, 0.042);
   --bg-surface-alt:  rgba(255, 255, 255, 0.07);
   --bg-elevated:     #141418;
+  --bg-header:       rgba(9, 9, 9, 0.92);
+  --bg-header-alt:   rgba(9, 9, 9, 0.80);
 
   --glass-border:    rgba(255, 255, 255, 0.09);
   --glass-blur:      28px;
+  --glass-shadow:    none;
+  --glass-premium-bg: rgba(12, 12, 20, 0.92);
+  --modal-grad:      linear-gradient(145deg, #0a0a0a, #141418);
+  --shadow-modal:    0 32px 80px rgba(0, 0, 0, 0.65);
+  --shadow-pop:      0 20px 60px rgba(0, 0, 0, 0.60);
+
+  /* Tinted feature panels (Dream Mode, Security Posture, cashflow tiles) */
+  --panel-cyan-grad:  linear-gradient(135deg, rgba(0, 30, 50, 0.95) 0%, rgba(0, 20, 40, 0.98) 100%);
+  --panel-green-grad: linear-gradient(135deg, rgba(0, 20, 15, 0.95) 0%, rgba(0, 10, 20, 0.98) 100%);
+  --panel-cyan-soft:  rgba(0, 30, 60, 0.80);
+  --panel-green-soft: rgba(0, 40, 30, 0.70);
+  --panel-red-soft:   rgba(35, 5, 5, 0.70);
+
+  /* The physical debit card is always a dark object — its ink is theme-fixed */
+  --card-ink:        #ffffff;
+  --card-ink-dim:    rgba(255, 255, 255, 0.85);
+  --card-ink-faint:  rgba(255, 255, 255, 0.40);
+  --card-line:       rgba(255, 255, 255, 0.15);
 
   --text-primary:    #ffffff;
+  --text-strong:     #E2E8F0;
+  --text-soft:       #CBD5E1;
   --text-secondary:  rgba(255, 255, 255, 0.58);
   --text-muted:      rgba(255, 255, 255, 0.26);
+
+  /* Fixed-contrast pairs — identical in both themes.
+     `on-accent`  = text sitting on a saturated bunq tile / status pill.
+     `on-bright`  = text sitting on a bright cyan→green gradient button.     */
+  --text-on-accent:  #ffffff;
+  --text-on-bright:  #0b0b0f;
 
   /* ── bunq brand accents ─────────────────────────────────────────────────── */
   --accent-cyan:     #00bfff;
@@ -39,6 +67,56 @@
   --color-yellow-glow: rgba(255, 140, 0, 0.22);
   --color-red-glow:    rgba(255, 59, 48, 0.20);
 
+  /* ── Categorical hues (charts, pills, agent chips) ──────────────────────── */
+  --hue-green:   #22c55e;
+  --hue-emerald: #10b981;
+  --hue-amber:   #f59e0b;
+  --hue-orange:  #ff6a00;
+  --hue-teal:    #06b6d4;
+  --hue-yellow:  #eab308;
+  --hue-slate:   #94a3b8;
+
+  /* ── Contrast "ink" ramp ────────────────────────────────────────────────────
+     Every surface / hairline / muted-label colour in the app resolves through
+     this ramp instead of a hard-coded rgba(255,255,255,α), which is what lets
+     the whole dashboard flip theme without touching a single component.      */
+  --ink-020: rgba(255, 255, 255, 0.02);
+  --ink-025: rgba(255, 255, 255, 0.025);
+  --ink-030: rgba(255, 255, 255, 0.03);
+  --ink-040: rgba(255, 255, 255, 0.04);
+  --ink-042: rgba(255, 255, 255, 0.042);
+  --ink-050: rgba(255, 255, 255, 0.05);
+  --ink-060: rgba(255, 255, 255, 0.06);
+  --ink-070: rgba(255, 255, 255, 0.07);
+  --ink-080: rgba(255, 255, 255, 0.08);
+  --ink-100: rgba(255, 255, 255, 0.1);
+  --ink-120: rgba(255, 255, 255, 0.12);
+  --ink-150: rgba(255, 255, 255, 0.15);
+  --ink-160: rgba(255, 255, 255, 0.16);
+  --ink-180: rgba(255, 255, 255, 0.18);
+  --ink-200: rgba(255, 255, 255, 0.2);
+  --ink-220: rgba(255, 255, 255, 0.22);
+  --ink-240: rgba(255, 255, 255, 0.24);
+  --ink-250: rgba(255, 255, 255, 0.25);
+  --ink-260: rgba(255, 255, 255, 0.26);
+  --ink-280: rgba(255, 255, 255, 0.28);
+  --ink-300: rgba(255, 255, 255, 0.3);
+  --ink-320: rgba(255, 255, 255, 0.32);
+  --ink-350: rgba(255, 255, 255, 0.35);
+  --ink-380: rgba(255, 255, 255, 0.38);
+  --ink-400: rgba(255, 255, 255, 0.4);
+  --ink-450: rgba(255, 255, 255, 0.45);
+  --ink-480: rgba(255, 255, 255, 0.48);
+  --ink-500: rgba(255, 255, 255, 0.5);
+  --ink-550: rgba(255, 255, 255, 0.55);
+  --ink-600: rgba(255, 255, 255, 0.6);
+  --ink-650: rgba(255, 255, 255, 0.65);
+  --ink-700: rgba(255, 255, 255, 0.7);
+  --ink-740: rgba(255, 255, 255, 0.74);
+  --ink-750: rgba(255, 255, 255, 0.75);
+  --ink-800: rgba(255, 255, 255, 0.8);
+  --ink-850: rgba(255, 255, 255, 0.85);
+
   /* ── bunq signature gradients ───────────────────────────────────────────── */
   --gradient-bunq:      linear-gradient(135deg, #00bfff 0%, #00ff95 100%);
   --gradient-bunq-blue: linear-gradient(135deg, #4000ff 0%, #377ef7 50%, #00bfff 100%);
@@ -53,11 +131,110 @@
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ── LIGHT THEME ──────────────────────────────────────────────────────────────
+   bunq's daylight look: white canvas, hairline-grey cards, saturated tiles kept
+   at full strength so the iconography reads identically in both modes.
+   Applied via <html data-theme="light"> — see src/theme.ts.                   */
+
+[data-theme='light'] {
+  --bg-base:         #ffffff;
+  --bg-surface:      rgba(15, 23, 42, 0.038);
+  --bg-surface-alt:  rgba(15, 23, 42, 0.063);
+  --bg-elevated:     #ffffff;
+  --bg-header:       rgba(255, 255, 255, 0.92);
+  --bg-header-alt:   rgba(255, 255, 255, 0.82);
+
+  --glass-border:    rgba(15, 23, 42, 0.10);
+  --glass-shadow:    0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 28px rgba(15, 23, 42, 0.06);
+  --glass-premium-bg: rgba(255, 255, 255, 0.96);
+  --modal-grad:      linear-gradient(145deg, #ffffff, #f3f6fa);
+  --shadow-modal:    0 24px 64px rgba(15, 23, 42, 0.18);
+  --shadow-pop:      0 16px 40px rgba(15, 23, 42, 0.14);
+
+  --panel-cyan-grad:  linear-gradient(135deg, rgba(0, 134, 201, 0.10) 0%, rgba(0, 134, 201, 0.04) 100%);
+  --panel-green-grad: linear-gradient(135deg, rgba(0, 153, 107, 0.10) 0%, rgba(0, 153, 107, 0.04) 100%);
+  --panel-cyan-soft:  rgba(0, 134, 201, 0.08);
+  --panel-green-soft: rgba(0, 153, 107, 0.08);
+  --panel-red-soft:   rgba(217, 43, 32, 0.07);
+
+  --text-primary:    #0b1220;
+  --text-strong:     #16202f;
+  --text-soft:       #475569;
+  --text-secondary:  rgba(15, 23, 42, 0.64);
+  --text-muted:      rgba(15, 23, 42, 0.46);
+
+  /* Accents darkened just enough to clear WCAG AA on white while keeping the
+     bunq hue identity (cyan → ocean blue, neon green → bunq green #00C896).  */
+  --accent-cyan:     #0086c9;
+  --accent-blue:     #2563eb;
+  --accent-green:    #00996b;
+  --accent-purple:   #7b1fa2;
+
+  --accent-cyan-glow:   rgba(0, 134, 201, 0.22);
+  --accent-blue-glow:   rgba(37, 99, 235, 0.20);
+  --accent-green-glow:  rgba(0, 153, 107, 0.18);
+
+  --color-green:   #00996b;
+  --color-yellow:  #b45309;
+  --color-red:     #d92b20;
+
+  --color-green-glow:  rgba(0, 153, 107, 0.18);
+  --color-yellow-glow: rgba(180, 83, 9, 0.18);
+  --color-red-glow:    rgba(217, 43, 32, 0.16);
+
+  /* Same hues, shifted down the luminance ramp to stay legible on white */
+  --hue-green:   #15803d;
+  --hue-emerald: #047857;
+  --hue-amber:   #b45309;
+  --hue-orange:  #c2410c;
+  --hue-teal:    #0e7490;
+  --hue-yellow:  #a16207;
+  --hue-slate:   #64748b;
+
+  --ink-020: rgba(15, 23, 42, 0.018);
+  --ink-025: rgba(15, 23, 42, 0.023);
+  --ink-030: rgba(15, 23, 42, 0.027);
+  --ink-040: rgba(15, 23, 42, 0.036);
+  --ink-042: rgba(15, 23, 42, 0.038);
+  --ink-050: rgba(15, 23, 42, 0.045);
+  --ink-060: rgba(15, 23, 42, 0.054);
+  --ink-070: rgba(15, 23, 42, 0.063);
+  --ink-080: rgba(15, 23, 42, 0.072);
+  --ink-100: rgba(15, 23, 42, 0.09);
+  --ink-120: rgba(15, 23, 42, 0.108);
+  --ink-150: rgba(15, 23, 42, 0.135);
+  --ink-160: rgba(15, 23, 42, 0.144);
+  --ink-180: rgba(15, 23, 42, 0.198);
+  --ink-200: rgba(15, 23, 42, 0.22);
+  --ink-220: rgba(15, 23, 42, 0.242);
+  --ink-240: rgba(15, 23, 42, 0.264);
+  --ink-250: rgba(15, 23, 42, 0.275);
+  --ink-260: rgba(15, 23, 42, 0.34);
+  --ink-280: rgba(15, 23, 42, 0.36);
+  --ink-300: rgba(15, 23, 42, 0.40);
+  --ink-320: rgba(15, 23, 42, 0.42);
+  --ink-350: rgba(15, 23, 42, 0.46);
+  --ink-380: rgba(15, 23, 42, 0.50);
+  --ink-400: rgba(15, 23, 42, 0.52);
+  --ink-450: rgba(15, 23, 42, 0.56);
+  --ink-480: rgba(15, 23, 42, 0.58);
+  --ink-500: rgba(15, 23, 42, 0.60);
+  --ink-550: rgba(15, 23, 42, 0.64);
+  --ink-600: rgba(15, 23, 42, 0.68);
+  --ink-650: rgba(15, 23, 42, 0.72);
+  --ink-700: rgba(15, 23, 42, 0.76);
+  --ink-740: rgba(15, 23, 42, 0.80);
+  --ink-750: rgba(15, 23, 42, 0.82);
+  --ink-800: rgba(15, 23, 42, 0.86);
+  --ink-850: rgba(15, 23, 42, 0.90);
+}
+
 html, body, #root {
   height: 100%;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg-base);
   color: var(--text-primary);
+  transition: background-color 0.35s ease, color 0.35s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -66,7 +243,7 @@ html, body, #root {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--ink-100); border-radius: 2px; }
 
 /* ── Glassmorphism utility ───────────────────────────────────────────────────── */
 
@@ -76,17 +253,20 @@ html, body, #root {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
   transition: border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.35s ease,
               box-shadow   0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Premium glassmorphism — for modals, intervention cards */
 .glass-premium {
-  background: rgba(12, 12, 20, 0.92);
+  background: var(--glass-premium-bg);
   backdrop-filter: blur(48px) saturate(200%);
   -webkit-backdrop-filter: blur(48px) saturate(200%);
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid var(--ink-100);
   border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
 }
 
 /* ── Icon Tile — the signature bunq rounded-square ───────────────────────────── */
@@ -119,7 +299,7 @@ html, body, #root {
 
 .bunq-divider {
   height: 1px;
-  background: rgba(255,255,255,0.07);
+  background: var(--ink-070);
   margin-left: 68px;
 }
 
@@ -134,7 +314,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #ffffff;
+  color: var(--text-on-accent);
   transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1),
               box-shadow  0.2s ease;
   position: relative;
@@ -185,7 +365,7 @@ html, body, #root {
   align-items: flex-start;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  color: #ffffff;
+  color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -319,7 +499,7 @@ button {
 .demo-reset-btn {
   background:     transparent;
   border:         none;
-  color:          rgba(240, 244, 255, 0.10);
+  color:          var(--ink-150);
   font-size:      0.6rem;
   font-family:    inherit;
   letter-spacing: 0.08em;
@@ -331,8 +511,8 @@ button {
 }
 
 .demo-reset-btn:hover {
-  color:            rgba(255, 59, 48, 0.65);
-  background-color: rgba(255, 59, 48, 0.06);
+  color:            var(--color-red);
+  background-color: rgba(217, 43, 32, 0.08);
 }
 
 /* ── Gradient text helper ───────────────────────────────────────────────────── */
@@ -355,13 +535,13 @@ button {
 /* ── bunq pill badge ────────────────────────────────────────────────────────── */
 
 .bunq-badge {
-  background:    rgba(0, 191, 255, 0.10);
-  border:        1px solid rgba(0, 191, 255, 0.22);
+  background:    color-mix(in srgb, var(--accent-cyan) 10%, transparent);
+  border:        1px solid color-mix(in srgb, var(--accent-cyan) 24%, transparent);
   border-radius: 100px;
   padding:       3px 10px;
   font-size:     10px;
   font-weight:   700;
-  color:         #00bfff;
+  color:         var(--accent-cyan);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-family:   'Montserrat', sans-serif;
@@ -406,7 +586,79 @@ button {
 .section-label {
   font-size:      10px;
   letter-spacing: 0.14em;
-  color:          rgba(255, 255, 255, 0.26);
+  color:          var(--text-muted);
   font-weight:    700;
   text-transform: uppercase;
+}
+
+/* ── Light-theme component refinements ──────────────────────────────────────
+   The saturated bunq tiles stay saturated (that is the brand), but their glow
+   shadows are re-tuned: a 40% coloured drop-shadow that reads as "lit" on black
+   turns muddy on white, so light mode swaps to a tighter, softer lift.        */
+
+[data-theme='light'] .bunq-tile-gold   { box-shadow: 0 2px 8px rgba(196,137,10,0.28); }
+[data-theme='light'] .bunq-tile-sky    { box-shadow: 0 2px 8px rgba(20,112,176,0.28), inset 0 0 0 1px rgba(255,255,255,0.18); }
+[data-theme='light'] .bunq-tile-green  { box-shadow: 0 2px 8px rgba(45,168,69,0.28);  }
+[data-theme='light'] .bunq-tile-travel { box-shadow: 0 2px 8px rgba(27,96,56,0.26);   }
+[data-theme='light'] .bunq-tile-pink   { box-shadow: 0 2px 8px rgba(181,23,158,0.28); }
+[data-theme='light'] .bunq-tile-cyan   { box-shadow: 0 2px 8px rgba(8,145,178,0.26);  }
+[data-theme='light'] .bunq-tile-orange { box-shadow: 0 2px 8px rgba(194,65,12,0.26);  }
+
+[data-theme='light'] ::-webkit-scrollbar-thumb { background: var(--ink-200); }
+
+[data-theme='light'] .live-dot { box-shadow: 0 0 6px var(--color-green-glow); }
+
+/* Emoji glyphs inside the coloured tiles keep their white-on-colour framing */
+[data-theme='light'] .bunq-cat-icon { background: rgba(255, 255, 255, 0.22); }
+
+/* ── Theme toggle ──────────────────────────────────────────────────────────── */
+
+.theme-toggle {
+  position: relative;
+  width: 58px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 100px;
+  border: 1px solid var(--glass-border);
+  background: var(--ink-060);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-toggle:hover { border-color: var(--accent-cyan); }
+
+.theme-toggle__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  background: var(--gradient-bunq);
+  box-shadow: 0 2px 8px var(--accent-cyan-glow);
+  transform: translateX(0);
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme='light'] .theme-toggle__knob { transform: translateX(28px); }
+
+/* Cross-fade the two glyphs living behind the knob */
+.theme-toggle__track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 7px;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.55;
+  pointer-events: none;
 }
