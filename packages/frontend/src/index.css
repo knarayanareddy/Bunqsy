@@ -379,6 +379,28 @@ button {
   box-shadow:    0 0 8px var(--color-green-glow);
 }
 
+/* ── Accessibility: respect OS motion preference (Marco) ───────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Focus visibility for keyboard nav (Marco) ──────────────────────────────── */
+
+*:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── High-contrast bump for tile icons (Marco: WCAG AA) ───────────────────── */
+
+.bunq-tile-sky { background: #1470B0; box-shadow: 0 4px 16px rgba(20,112,176,0.45), inset 0 0 0 1px rgba(255,255,255,0.15); }
+
 /* ── Section label ──────────────────────────────────────────────────────────── */
 
 .section-label {

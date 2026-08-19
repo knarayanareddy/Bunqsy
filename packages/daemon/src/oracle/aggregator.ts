@@ -19,8 +19,11 @@ export function aggregate(votes: OracleVote[]): OracleVerdict {
   const OPPORTUNITY_TYPES = new Set(['JAR_SWEEP']);
   const interventionVotes = votes.filter((v) => v.shouldIntervene);
   const hasOpportunityVote = interventionVotes.some(v => OPPORTUNITY_TYPES.has(v.suggestedType ?? ''));
+  // High-risk single-agent veto: a single agent at >=85 can trigger even when mean <50.
+  // Prevents a lone Fraud Shadow at 92 being muted by 6× CLEAR at 10 (mean ~22).
+  const hasHighRiskVeto = interventionVotes.some(v => v.riskScore >= 85);
   const shouldIntervene = interventionVotes.length > 0 &&
-    (aggregateRiskScore >= 50 || hasOpportunityVote);
+    (aggregateRiskScore >= 50 || hasOpportunityVote || hasHighRiskVeto);
 
   // Highest-risk intervention vote determines the suggested type
   const triggerVote = [...interventionVotes].sort((a, b) => b.riskScore - a.riskScore)[0];

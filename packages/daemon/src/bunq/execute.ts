@@ -87,6 +87,23 @@ export async function executePlan(planId: string): Promise<void> {
 
   const steps = JSON.parse(row.steps) as ExecutionStep[];
 
+  // SRE offline fallback — short-circuit bunq writes when sandbox is down.
+  // Plans still go through CONFIRMED → EXECUTED lifecycle so the UI demo works.
+  if (process.env.BUNQ_OFFLINE_MODE === 'true') {
+    console.warn(`[bunq] OFFLINE_MODE — simulating ${steps.length} step(s) for plan ${planId}`);
+    for (const step of steps) {
+      db.prepare(
+        `INSERT INTO execution_step_results
+           (id, plan_id, step_id, success, bunq_response, error_message, executed_at)
+         VALUES (?, ?, ?, 1, ?, NULL, datetime('now'))`,
+      ).run(uuid(), planId, step.id, JSON.stringify({ offline: true, simulated: true, stepType: step.type }));
+    }
+    db.prepare(
+      `UPDATE execution_plans SET status = 'EXECUTED', executed_at = datetime('now') WHERE id = ?`,
+    ).run(planId);
+    return;
+  }
+
   // Load latest session for signing credentials
   const sessionRow = db
     .prepare(

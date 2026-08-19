@@ -6,6 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { limitedCreate } from '../lib/claudeLimiter.js';
 import type { OracleVerdict } from '@bunqsy/shared';
 import type { HandlerResult } from './types.js';
 import type { RecallSnapshot } from '../heartbeat/recall.js';
@@ -46,7 +47,7 @@ export async function generateNarration(
   try {
     const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
 
-    const response = await anthropic.messages.create({
+    const response = await limitedCreate(anthropic, {
       model:      'claude-haiku-4-5-20251001',
       max_tokens: 300,
       messages:   [{ role: 'user', content: buildPrompt(verdict, result, snapshot) }],

@@ -1,3 +1,8 @@
+# Compiled TS output colocated with sources (generated, not hand-written)
+packages/daemon/src/**/*.js
+packages/shared/src/**/*.js
+packages/presentation/src/**/*.js
+
 # Dependency directories
 node_modules/
 

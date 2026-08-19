@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
+import { limitedCreate } from '../../lib/claudeLimiter.js';
 import type Database from 'better-sqlite3';
 import type { OracleVote } from '@bunqsy/shared';
 import {
@@ -77,7 +78,7 @@ export async function run(
 
     const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
 
-    const response = await anthropic.messages.create({
+    const response = await limitedCreate(anthropic, {
       model:      'claude-haiku-4-5-20251001',
       max_tokens: 200,
       system:     'You are a financial fraud detection system. Respond ONLY with a single JSON object and nothing else.',

@@ -453,7 +453,7 @@ export function VoiceOrb({ onPlanConfirmed, activeIntervention, onActionTriggere
         </div>
       )}
 
-      {/* Orb */}
+      {/* Orb — keyboard accessible (Marco) */}
       <div
         style={orbStyle(orbState, convMode)}
         onPointerDown={convMode ? undefined : handlePointerDown}
@@ -461,7 +461,18 @@ export function VoiceOrb({ onPlanConfirmed, activeIntervention, onActionTriggere
         onPointerLeave={convMode ? undefined : handlePointerUp}
         onClick={convMode ? handleTap : undefined}
         role="button"
-        aria-label={convMode ? 'Tap to speak' : 'Hold to record voice command'}
+        tabIndex={0}
+        aria-label={convMode ? 'Tap to speak — press Enter or Space' : 'Hold to record voice command — press Space to record'}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (convMode) handleTap();
+            else if (orbState === 'idle') { unlockAudio(); void startRecordingInner(); }
+            else if (orbState === 'recording') stopRecording();
+          }
+        }}
+        onFocus={(e) => { (e.currentTarget as HTMLElement).style.outline = '2px solid #00bfff'; (e.currentTarget as HTMLElement).style.outlineOffset = '2px'; }}
+        onBlur={(e) => { (e.currentTarget as HTMLElement).style.outline = 'none'; }}
       >
         <OrbInner state={orbState} convMode={convMode} />
       </div>

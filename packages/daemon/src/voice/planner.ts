@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { v4 as uuid } from 'uuid';
+import { limitedCreate } from '../lib/claudeLimiter.js';
 import type { ExecutionStep } from '@bunqsy/shared';
 
 const PLANNER_SYSTEM = `
@@ -91,7 +92,7 @@ export async function planFromTranscript(
 
   let rawText: string;
   try {
-    const msg = await client.messages.create({
+    const msg = await limitedCreate(client, {
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       system: systemPrompt,

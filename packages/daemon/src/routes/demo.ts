@@ -91,6 +91,9 @@ export async function registerDemoRoute(
   getAID?: () => number,
 ): Promise<void> {
   fastify.post('/api/demo/reset', async (_req: FastifyRequest, reply: FastifyReply) => {
+    if (process.env['BUNQ_ENV'] === 'production') {
+      return reply.status(403).send({ error: 'Demo reset is not available in production' });
+    }
     const db = getDb();
     const AID = getAID?.() ?? 1;
 

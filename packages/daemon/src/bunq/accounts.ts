@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3';
 import { type BunqClient } from './client.js';
 import { type TaggedMonetaryAccount, type AccountSummary, type AccountClassification } from '@bunqsy/shared';
 import { getGoals } from '../memory/profile.js';
+import { parseEur } from '../lib/parseEur.js';
 
 /**
  * Returns all monetary accounts (bank, savings, joint) for the authenticated user.
@@ -62,12 +63,7 @@ export async function getTotalBalance(client: BunqClient): Promise<number> {
   const accounts = await client.getAccounts();
   return accounts
     .filter((a) => a.status === 'ACTIVE')
-    .reduce((sum, account) => {
-      const value = account.balance?.value;
-      if (!value) return sum;
-      const parsed = parseFloat(value);
-      return sum + (isNaN(parsed) ? 0 : parsed);
-    }, 0);
+    .reduce((sum, account) => sum + parseEur(account.balance?.value), 0);
 }
 
 /**
@@ -75,10 +71,7 @@ export async function getTotalBalance(client: BunqClient): Promise<number> {
  * Returns 0 if the account has no balance field.
  */
 export function parseAccountBalance(account: TaggedMonetaryAccount): number {
-  const value = account.balance?.value;
-  if (!value) return 0;
-  const parsed = parseFloat(value);
-  return isNaN(parsed) ? 0 : parsed;
+  return parseEur(account.balance?.value);
 }
 
 // ─── Phase 14: Multi-account intelligence ────────────────────────────────────
@@ -125,7 +118,7 @@ export function buildAccountSummaries(
     if (isPrimary) primaryAssigned = true;
 
     const classification = classifyAccount(account, isPrimary);
-    const balanceCents   = Math.round(parseFloat(account.balance?.value ?? '0') * 100);
+    const balanceCents   = Math.round(parseEur(account.balance?.value) * 100);
 
     // Recent transaction count from the local cache
     const recentRow = db

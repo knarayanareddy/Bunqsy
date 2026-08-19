@@ -21,10 +21,17 @@ export function getDb(): Database.Database {
     _db = new Database(dbPath);
     _db.pragma('journal_mode = WAL');
     _db.pragma('foreign_keys = ON');
+    _db.pragma('busy_timeout = 5000');
 
     // Run base schema (all CREATE TABLE IF NOT EXISTS — safe to re-run)
     const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
     _db.exec(schema);
+
+    // Retention prune — keep demo DB under 5 MB (SRE)
+    try {
+      _db.exec(`DELETE FROM tick_log  WHERE tick_at  < datetime('now', '-30 days')`);
+      _db.exec(`DELETE FROM score_log WHERE logged_at < datetime('now', '-30 days')`);
+    } catch { /* ignore prune errors on first boot */ }
 
     // Migrate: add bookkeeping columns to transactions for DBs predating the ledger feature
     const txCols = new Set(
