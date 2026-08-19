@@ -46,6 +46,13 @@ export interface InsightsProps {
   onDismissIntervention: (id: string) => void;
 }
 
+const PIE_DEMO_DATA = [
+  { label: 'Rent & Bills',  amount: 950.00, icon: '🏠' },
+  { label: 'Dining Out',    amount: 284.50, icon: '🍽️' },
+  { label: 'Groceries',     amount: 178.24, icon: '🛒' },
+  { label: 'Subscriptions', amount: 95.97,  icon: '🔄' },
+];
+
 // ─── Metadata maps ────────────────────────────────────────────────────────────
 
 const AGENT_META: Record<string, { title: string; icon: string; color: string; bg: string }> = {
@@ -342,6 +349,134 @@ function GoalRing({ goals }: { goals: Goal[] }): React.JSX.Element {
           €{goal?.currentAmount.toLocaleString()} of €{goal?.targetAmount.toLocaleString()}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Category pie — bunq 4-colour donut with perimeter icons (audit §3, ref 10)
+
+interface CategorySlice { label: string; amount: number; icon: string }
+
+/** bunq's categorical wheel: purple → orange → yellow → red, in that order. */
+const PIE_HUES = ['var(--hue-purple)', 'var(--hue-orange)', 'var(--hue-yellow)', 'var(--hue-red)'] as const;
+
+/** Donut segment as a single filled path (outer arc → inner arc → close). */
+function donutPath(start: number, end: number, rOuter = 58, rInner = 36): string {
+  const a0 = start * 2 * Math.PI - Math.PI / 2;
+  const a1 = end   * 2 * Math.PI - Math.PI / 2;
+  const x0 = 60 + rOuter * Math.cos(a0), y0 = 60 + rOuter * Math.sin(a0);
+  const x1 = 60 + rOuter * Math.cos(a1), y1 = 60 + rOuter * Math.sin(a1);
+  const x2 = 60 + rInner * Math.cos(a1), y2 = 60 + rInner * Math.sin(a1);
+  const x3 = 60 + rInner * Math.cos(a0), y3 = 60 + rInner * Math.sin(a0);
+  const large = end - start > 0.5 ? 1 : 0;
+  return `M ${x0} ${y0} A ${rOuter} ${rOuter} 0 ${large} 1 ${x1} ${y1} `
+       + `L ${x2} ${y2} A ${rInner} ${rInner} 0 ${large} 0 ${x3} ${y3} Z`;
+}
+
+function CategoryPie({ data }: { data: CategorySlice[] }): React.JSX.Element {
+  const total = data.reduce((sum, d) => sum + d.amount, 0) || 1;
+
+  let acc = 0;
+  const slices = data.map((d, i) => {
+    const start = acc;
+    acc += d.amount / total;
+    return { ...d, start, end: acc, color: PIE_HUES[i % PIE_HUES.length]!, index: i };
+  });
+
+  return (
+    <div style={{ ...card.wrap, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+        <div style={card.title}>Spending by Category</div>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', color: 'var(--accent-cyan)' }}>THIS WEEK</div>
+      </div>
+
+      <div style={{ position: 'relative', width: 160, height: 160 }}>
+        <svg width={160} height={160} viewBox="0 0 120 120" role="img"
+             aria-label={`Spending by category, total ${Math.round(total)} euro`}>
+          {slices.map((sl) => (
+            <path
+              key={sl.label}
+              d={donutPath(sl.start, sl.end)}
+              fill={sl.color}
+              stroke="var(--bg-base)"
+              strokeWidth={1.5}
+            />
+          ))}
+          {/* Centre knob carries the running total (ref 10_pie_chart.png) */}
+          <circle cx={60} cy={60} r={28} fill="var(--bg-elevated)" stroke="var(--ink-060)" strokeWidth={1} />
+          <text x={60} y={58} textAnchor="middle" fill="var(--text-primary)"
+                fontSize={11} fontWeight={800} fontFamily="'Montserrat', sans-serif">
+            €{Math.round(total).toLocaleString('nl-NL')}
+          </text>
+          <text x={60} y={70} textAnchor="middle" fill="var(--ink-350)"
+                fontSize={7} fontWeight={600} letterSpacing={0.8}>TOTAL</text>
+        </svg>
+
+        {/* Category icons float on the perimeter, aligned to their segment */}
+        {slices.map((sl) => {
+          const mid = (sl.start + sl.end) / 2;
+          const a   = mid * 2 * Math.PI - Math.PI / 2;
+          return (
+            <div
+              key={`${sl.label}-icon`}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: 80 + 78 * Math.cos(a),
+                top:  80 + 78 * Math.sin(a),
+                transform: 'translate(-50%, -50%)',
+                width: 28, height: 28, borderRadius: 9,
+                background: sl.color,
+                border: '1px solid var(--on-tile-stroke-lift)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
+                boxShadow: `0 4px 12px color-mix(in srgb, ${sl.color} 33%, transparent)`,
+                animation: 'float 3s ease-in-out infinite',
+                animationDelay: `${sl.index * 0.2}s`,
+              }}
+            >
+              {sl.icon}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 16 }}>
+        {slices.map((sl) => (
+          <div key={`${sl.label}-legend`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--ink-650)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: sl.color, display: 'inline-block' }} />
+            {sl.label}
+            <span style={{ color: 'var(--ink-350)' }}>{Math.round((sl.amount / total) * 100)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── ESG impact — bunq Green globe (audit §6) ────────────────────────────────
+
+function GreenImpact({ trees }: { trees: number }): React.JSX.Element {
+  return (
+    <div style={{
+      ...card.wrap,
+      background: 'color-mix(in srgb, var(--esg-green) 6%, transparent)',
+      border: '1px solid color-mix(in srgb, var(--esg-green) 15%, transparent)',
+      borderLeft: '3px solid var(--esg-green)',
+      padding: 16,
+      display: 'flex', alignItems: 'center', gap: 12,
+    }}>
+      <span style={{ fontSize: 18 }} aria-hidden="true">🌍</span>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--esg-green)' }}>
+          You planted {trees} trees
+        </div>
+        <div style={{ fontSize: 10, color: 'var(--ink-450)', marginTop: 2 }}>
+          ESG impact · bunq Green
+        </div>
+      </div>
+      <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: 'var(--esg-green)' }}>
+        +{trees}
+      </span>
     </div>
   );
 }
@@ -1097,6 +1232,17 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
 
       {/* KPI Tiles */}
       <KpiTiles kpis={data?.kpis ?? null} />
+
+      {/* Category pie + ESG impact (audit §3 / §6).
+          The daemon has no category breakdown endpoint yet, so this mirrors the
+          dashboard's demo categories — swap `PIE_DEMO_DATA` for live data the
+          moment /api/insights exposes it. */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24, alignItems: 'start' }}>
+        <CategoryPie data={PIE_DEMO_DATA} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <GreenImpact trees={12} />
+        </div>
+      </div>
 
       {/* Security Posture + Connected Accounts row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'start' }}>

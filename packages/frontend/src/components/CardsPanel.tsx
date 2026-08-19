@@ -149,9 +149,19 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        boxShadow: frozen ? '0 4px 20px rgba(239,68,68,0.15)' : '0 8px 32px rgba(0,0,0,0.4)',
+        boxShadow: frozen
+          ? '0 4px 20px rgba(239,68,68,0.15)'
+          : '0 12px 36px rgba(0,0,0,0.45), inset 0 0 0 1px var(--card-line-soft)',
         transition: 'box-shadow 0.3s',
       }}>
+        {/* Etched inner edge — the card is a physical object, not a panel */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', inset: 0, borderRadius: 20,
+            border: '1px solid var(--card-line-soft)', pointerEvents: 'none',
+          }}
+        />
         {/* Frosted overlay when frozen */}
         {frozen && (
           <div style={{
@@ -193,21 +203,37 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
           </div>
         </div>
 
-        {/* Card chip */}
-        <div style={{
-          width: 36, height: 28, borderRadius: 5,
-          background: 'linear-gradient(135deg, #c8a95b 0%, #e8c97a 40%, #b8913a 100%)',
-          border: '1px solid var(--card-line)',
-        }} />
+        {/* EMV chip — gold 6-cell contact grid + contactless waves (ref 18) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            aria-hidden="true"
+            style={{
+              width: 34, height: 24, borderRadius: 4,
+              background: 'linear-gradient(135deg, #FFD93D 0%, #C8A415 40%, #B8913A 100%)',
+              border: '1px solid var(--card-line-lift)',
+              boxShadow: 'inset 0 1px 0 var(--chip-gloss), 0 1px 3px rgba(0,0,0,0.35), inset 0 -1px 1px rgba(0,0,0,0.20)',
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(2, 1fr)',
+              gap: 1, padding: 3,
+            }}
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{ background: 'rgba(0,0,0,0.08)', borderRadius: 1, border: '0.5px solid rgba(0,0,0,0.12)' }} />
+            ))}
+          </div>
+          <div aria-hidden="true" style={{ color: 'var(--card-ink-faint)', fontSize: 10, letterSpacing: 2, fontWeight: 300 }}>
+            )))
+          </div>
+        </div>
 
         {/* PAN + details */}
         <div>
           <div style={{
-            fontSize: 16, fontWeight: 600, color: 'var(--card-ink-dim)',
-            letterSpacing: '0.18em', marginBottom: 8,
+            fontSize: 15, fontWeight: 600, color: 'var(--card-ink-strong)',
+            letterSpacing: '0.22em', marginBottom: 8,
             fontFamily: "'Montserrat', monospace",
+            fontVariantNumeric: 'tabular-nums',
           }}>
-            ●●●● &nbsp;●●●● &nbsp;●●●● &nbsp;{card.lastFourDigits ?? '····'}
+            •••• &nbsp;•••• &nbsp;•••• &nbsp;{card.lastFourDigits ?? '····'}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>

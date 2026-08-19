@@ -90,7 +90,20 @@ export function RecentTransactions({ refreshKey = 0 }: Props): React.JSX.Element
       )}
 
       {!loading && rows.length === 0 && (
-        <div style={styles.empty}>No transactions yet</div>
+        <div style={{
+          ...styles.empty,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 10, padding: '28px 0 20px',
+        }}>
+          <span style={{ fontSize: 28 }} aria-hidden="true">🌙</span>
+          <div style={{ fontSize: 13, color: 'var(--ink-550)', fontWeight: 600 }}>Your feed is quiet</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-320)', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>
+            Fund the sandbox to wake up your guardian — or connect your bunq account.
+          </div>
+          <span style={{ fontSize: 10, color: 'var(--ink-180)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            BUNQSY is listening
+          </span>
+        </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>

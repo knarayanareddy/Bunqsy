@@ -59,7 +59,8 @@ function BunqBalance({
   const decimals = ZERO_DECIMAL.has(code) ? 0 : 2;
 
   const [intStr, decStr] = Math.abs(amount).toFixed(decimals).split('.');
-  const formatted = parseInt(intStr!, 10).toLocaleString('en-US');
+  // bunq prints European thousands separators: 1.227 — not 1,227 (audit §1).
+  const formatted = parseInt(intStr!, 10).toLocaleString('nl-NL');
   const decSize   = Math.round(intSize * 0.53);
   const topOffset = Math.round(intSize * 0.1);
   // Real money can be negative — bunq shows a true minus sign, not a hyphen.
@@ -202,6 +203,27 @@ export function App(): React.JSX.Element {
     void speakText('Your dream mode analysis is complete. Opening your financial briefing now.');
   }, [ws.dreamBriefing]);
 
+  function focusVoiceCommand(): void {
+    const el = document.getElementById('voice-command');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.querySelector('button')?.focus();
+  }
+
+  async function fundSandbox(): Promise<void> {
+    setFundingState('loading');
+    try {
+      const r = await fetch('/api/demo/fund-sandbox', { method: 'POST' });
+      if (!r.ok) throw new Error('fund failed');
+      setFundingState('done');
+      setTxRefreshKey(k => k + 1);
+      setTimeout(() => setFundingState('idle'), 6000);
+    } catch {
+      setFundingState('error');
+      setTimeout(() => setFundingState('idle'), 4000);
+    }
+  }
+
   async function handleDemoReset(): Promise<void> {
     await fetch('/api/demo/reset', { method: 'POST' });
     window.location.reload();
@@ -239,7 +261,7 @@ export function App(): React.JSX.Element {
           height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div className="bunq-rainbow" style={{ width: '40px', height: '40px', borderRadius: '12px' }} />
             <div>
               <div style={{
@@ -259,6 +281,43 @@ export function App(): React.JSX.Element {
 
           {/* Nav actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* bunq quick actions — ↑ send / ↓ request / + top up (audit §7).
+                Money movement in BUNQSY always goes through the guardian, so
+                send/request hand off to the voice command panel rather than
+                opening a payment form that does not exist. */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button
+                type="button"
+                className="bunq-action-btn bunq-action-btn--sm"
+                aria-label="Send money — ask BUNQSY"
+                title="Send money — ask BUNQSY"
+                onClick={focusVoiceCommand}
+                style={{ background: 'var(--esg-green)' }}
+              >↑</button>
+              <button
+                type="button"
+                className="bunq-action-btn bunq-action-btn--sm"
+                aria-label="Request money — ask BUNQSY"
+                title="Request money — ask BUNQSY"
+                onClick={focusVoiceCommand}
+                style={{ background: 'var(--accent-blue)' }}
+              >↓</button>
+              <button
+                type="button"
+                className="bunq-action-btn bunq-action-btn--sm"
+                aria-label={fundingState === 'loading' ? 'Topping up sandbox' : 'Top up sandbox with €500'}
+                title="Top up sandbox (€500)"
+                disabled={fundingState === 'loading'}
+                onClick={() => { void fundSandbox(); }}
+                style={{
+                  background: fundingState === 'done' ? 'var(--esg-green)' : '#E8A40A',
+                  fontSize: 16,
+                  cursor: fundingState === 'loading' ? 'wait' : 'pointer',
+                  opacity: fundingState === 'loading' ? 0.6 : 1,
+                }}
+              >{fundingState === 'done' ? '✓' : '+'}</button>
+            </div>
+
             <ThemeToggle />
 
             <div style={{
@@ -379,10 +438,10 @@ export function App(): React.JSX.Element {
 
       {/* ── Bookkeeping Tab ─────────────────────────────────────────────────── */}
       {activeTab === 'bookkeeping' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <BookkeepingStatus onExportClick={() => setExportModalOpen(true)} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', alignItems: 'start' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <ProfitAndLoss />
               <VatTracker />
             </div>
@@ -558,15 +617,7 @@ export function App(): React.JSX.Element {
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button
-                onClick={async () => {
-                  setFundingState('loading');
-                  try {
-                    const r = await fetch('/api/demo/fund-sandbox', { method: 'POST' });
-                    if (!r.ok) throw new Error();
-                    setFundingState('done'); setTxRefreshKey(k => k+1);
-                    setTimeout(() => setFundingState('idle'), 6000);
-                  } catch { setFundingState('error'); setTimeout(() => setFundingState('idle'), 4000); }
-                }}
+                onClick={() => { void fundSandbox(); }}
                 style={{ background: 'rgba(0,255,149,0.15)', border: '1px solid rgba(0,255,149,0.3)', borderRadius: '100px', padding: '8px 16px', color: 'var(--accent-green)', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 💶 Fund Sandbox
@@ -591,7 +642,7 @@ export function App(): React.JSX.Element {
         )}
 
         {/* ── Voice Command — top center ───────────────────────────────── */}
-        <div className="glass" style={{ marginBottom: '14px', padding: '16px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', maxWidth: '560px', margin: '0 auto 14px' }}>
+        <div id="voice-command" className="glass" style={{ marginBottom: '16px', padding: '16px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', maxWidth: '560px', margin: '0 auto 16px' }}>
           <span className="section-label">Voice Command</span>
           <VoiceOrb
             activeIntervention={ws.intervention ? {
@@ -605,10 +656,10 @@ export function App(): React.JSX.Element {
         </div>
 
         {/* 3-column grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr 340px', gap: '18px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr 340px', gap: '24px', alignItems: 'start' }}>
 
           {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             <BUNQSYScore score={ws.score} />
 
@@ -634,7 +685,7 @@ export function App(): React.JSX.Element {
                     return (
                       <div key={String(s.account.id)}>
                         <div className="bunq-account-row">
-                          <div className={`bunq-tile ${meta.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
+                          <div className={`bunq-tile ${meta.tileClass}`}>
                             {meta.icon}
                           </div>
                           <div style={{ flex: 1, fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -649,7 +700,7 @@ export function App(): React.JSX.Element {
                 : ACCOUNT_TILES_FALLBACK.map((tile, i) => (
                     <div key={tile.label}>
                       <div className="bunq-account-row">
-                        <div className={`bunq-tile ${tile.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
+                        <div className={`bunq-tile ${tile.tileClass}`}>
                           {tile.icon}
                         </div>
                         <div style={{ flex: 1, fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
@@ -672,22 +723,44 @@ export function App(): React.JSX.Element {
               ).map((tile, i, arr) => (
                 <div key={tile.label}>
                   <div className="bunq-account-row">
-                    <div className={`bunq-tile ${tile.tileClass}`} style={{ width: '54px', height: '54px', fontSize: '26px' }}>
+                    <div className={`bunq-tile ${tile.tileClass}`}>
                       {tile.icon}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-                        {tile.label}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                        <div style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+                          {tile.label}
+                        </div>
+                        {tile.goal !== undefined && (
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, color: 'var(--hue-pink)',
+                            letterSpacing: '0.08em', whiteSpace: 'nowrap',
+                          }}>
+                            LIMIT: €{tile.goal.toLocaleString('nl-NL')}
+                          </span>
+                        )}
                       </div>
                       {tile.goal !== undefined && (
-                        <div style={{ marginTop: '7px', height: '3px', background: 'var(--ink-100)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{
+                          position: 'relative', marginTop: '7px', height: '3px',
+                          background: 'var(--ink-100)', borderRadius: '2px', overflow: 'visible',
+                        }}>
                           <div style={{
                             height: '100%',
                             width: `${Math.min(tile.pct, 100)}%`,
-                            background: 'var(--accent-green)',
+                            background: tile.pct >= 100 ? 'var(--hue-pink)' : 'var(--accent-green)',
                             borderRadius: '2px',
-                            transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1)',
+                            transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1), background-color 0.4s ease',
                           }} />
+                          {/* Pink dashed reference line pinned to the limit (ref 13_budget_limit.png) */}
+                          <div
+                            aria-hidden="true"
+                            style={{
+                              position: 'absolute', top: -6, bottom: -6, left: '100%', width: 0,
+                              borderLeft: '1.5px dashed var(--hue-pink)', opacity: 0.9,
+                              transform: 'translateX(-0.5px)',
+                            }}
+                          />
                         </div>
                       )}
                     </div>
@@ -703,7 +776,7 @@ export function App(): React.JSX.Element {
           </div>
 
           {/* ── CENTER COLUMN ───────────────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <OracleVotingPanel
               votes={sim.votes}
               verdict={sim.verdict}
@@ -751,8 +824,8 @@ export function App(): React.JSX.Element {
                       <div key={s.account.id} style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
                         padding: '12px 14px',
-                        background: 'var(--ink-025)',
-                        border: `1px solid color-mix(in srgb, ${col} 16%, transparent)`,
+                        background: `color-mix(in srgb, ${col} 12%, transparent)`,
+                        border: `1px solid color-mix(in srgb, ${col} 19%, transparent)`,
                         borderLeft: `3px solid ${col}`,
                         borderRadius: '14px',
                         position: 'relative',
@@ -760,6 +833,7 @@ export function App(): React.JSX.Element {
                         <div style={{
                           width: '40px', height: '40px', borderRadius: '12px',
                           background: `color-mix(in srgb, ${col} 13%, transparent)`,
+                          border: `1px solid color-mix(in srgb, ${col} 19%, transparent)`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '20px', flexShrink: 0,
                         }}>
@@ -826,7 +900,7 @@ export function App(): React.JSX.Element {
           </div>
 
           {/* ── RIGHT COLUMN ────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {/* ── Spending This Month ── live when daemon has data, fallback otherwise */}
             <div style={{
@@ -860,6 +934,8 @@ export function App(): React.JSX.Element {
                               gap: '10px', padding: '0 12px',
                               minWidth: '110px',
                               overflow: 'hidden',
+                              border: '1px solid var(--ink-080)',
+                              animation: 'pulseWidth 0.8s cubic-bezier(0.4,0,0.2,1)',
                             }}>
                               <div className="bunq-cat-icon">{dayIcons[d.day] ?? '💸'}</div>
                               <div>
@@ -890,6 +966,8 @@ export function App(): React.JSX.Element {
                       gap: '10px', padding: '0 12px',
                       minWidth: '130px',
                       overflow: 'hidden',
+                      border: '1px solid var(--ink-080)',
+                      animation: 'pulseWidth 0.9s cubic-bezier(0.4,0,0.2,1)',
                     }}>
                       <div className="bunq-cat-icon">{cat.icon}</div>
                       <div>
@@ -967,7 +1045,7 @@ export function App(): React.JSX.Element {
         color: 'var(--ink-160)', position: 'relative', zIndex: 1,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <span style={{
             fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: '12px',
             background: 'linear-gradient(135deg,var(--accent-cyan),var(--accent-green))',
