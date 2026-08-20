@@ -52,12 +52,12 @@ function cardGradient(type: string | null, idx: number): string {
 }
 
 function statusColor(status: string | null): { color: string; bg: string; label: string } {
-  if (status === 'ACTIVE')       return { color: '#22c55e', bg: 'rgba(34,197,94,0.15)',  label: 'ACTIVE' };
+  if (status === 'ACTIVE')       return { color: 'var(--hue-green)', bg: 'rgba(34,197,94,0.15)',  label: 'ACTIVE' };
   if (status === 'DEACTIVATED')  return { color: '#ef4444', bg: 'rgba(239,68,68,0.15)',  label: 'FROZEN' };
   if (status === 'CANCELLED_BY_USER') return { color: '#ef4444', bg: 'rgba(239,68,68,0.15)', label: 'FROZEN' };
-  if (status === 'LOST')         return { color: '#f97316', bg: 'rgba(249,115,22,0.15)', label: 'LOST' };
+  if (status === 'LOST')         return { color: 'var(--hue-orange)', bg: 'rgba(249,115,22,0.15)', label: 'LOST' };
   if (status === 'STOLEN')       return { color: '#dc2626', bg: 'rgba(220,38,38,0.15)',  label: 'STOLEN' };
-  return { color: '#94a3b8', bg: 'rgba(148,163,184,0.12)', label: status ?? 'UNKNOWN' };
+  return { color: 'var(--hue-slate)', bg: 'rgba(148,163,184,0.12)', label: status ?? 'UNKNOWN' };
 }
 
 function isFrozen(status: string | null): boolean {
@@ -141,7 +141,7 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
       <div style={{
         borderRadius: 20,
         background: cardGradient(card.type, idx),
-        border: '1px solid rgba(255,255,255,0.10)',
+        border: '1px solid var(--ink-100)',
         padding: '20px 22px',
         position: 'relative',
         overflow: 'hidden',
@@ -149,9 +149,19 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        boxShadow: frozen ? '0 4px 20px rgba(239,68,68,0.15)' : '0 8px 32px rgba(0,0,0,0.4)',
+        boxShadow: frozen
+          ? '0 4px 20px rgba(239,68,68,0.15)'
+          : '0 12px 36px rgba(0,0,0,0.45), inset 0 0 0 1px var(--card-line-soft)',
         transition: 'box-shadow 0.3s',
       }}>
+        {/* Etched inner edge — the card is a physical object, not a panel */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', inset: 0, borderRadius: 20,
+            border: '1px solid var(--card-line-soft)', pointerEvents: 'none',
+          }}
+        />
         {/* Frosted overlay when frozen */}
         {frozen && (
           <div style={{
@@ -165,20 +175,20 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
         {/* bunq rainbow strip — top edge */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-          background: 'linear-gradient(90deg, #ef4444 0%, #f97316 17%, #eab308 33%, #22c55e 50%, #3b82f6 67%, #6366f1 83%, #a855f7 100%)',
+          background: 'linear-gradient(90deg, #ef4444 0%, var(--hue-orange) 17%, var(--hue-yellow) 33%, var(--hue-green) 50%, #3b82f6 67%, #6366f1 83%, #a855f7 100%)',
           borderRadius: '20px 20px 0 0',
         }} />
 
         {/* Top row: bunq logo + badges */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 4 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--card-ink)', letterSpacing: '-0.02em', fontFamily: "'Montserrat', sans-serif" }}>
             bunq
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             {isSandboxDemo && (
               <div style={{
                 fontSize: 8, fontWeight: 800, padding: '2px 7px', borderRadius: 100,
-                background: 'rgba(234,179,8,0.15)', color: '#eab308',
+                background: 'rgba(234,179,8,0.15)', color: 'var(--hue-yellow)',
                 letterSpacing: '0.12em', border: '1px solid rgba(234,179,8,0.25)',
               }}>
                 SANDBOX
@@ -193,32 +203,48 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
           </div>
         </div>
 
-        {/* Card chip */}
-        <div style={{
-          width: 36, height: 28, borderRadius: 5,
-          background: 'linear-gradient(135deg, #c8a95b 0%, #e8c97a 40%, #b8913a 100%)',
-          border: '1px solid rgba(255,255,255,0.15)',
-        }} />
+        {/* EMV chip — gold 6-cell contact grid + contactless waves (ref 18) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            aria-hidden="true"
+            style={{
+              width: 34, height: 24, borderRadius: 4,
+              background: 'linear-gradient(135deg, #FFD93D 0%, #C8A415 40%, #B8913A 100%)',
+              border: '1px solid var(--card-line-lift)',
+              boxShadow: 'inset 0 1px 0 var(--chip-gloss), 0 1px 3px rgba(0,0,0,0.35), inset 0 -1px 1px rgba(0,0,0,0.20)',
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(2, 1fr)',
+              gap: 1, padding: 3,
+            }}
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{ background: 'rgba(0,0,0,0.08)', borderRadius: 1, border: '0.5px solid rgba(0,0,0,0.12)' }} />
+            ))}
+          </div>
+          <div aria-hidden="true" style={{ color: 'var(--card-ink-faint)', fontSize: 10, letterSpacing: 2, fontWeight: 300 }}>
+            )))
+          </div>
+        </div>
 
         {/* PAN + details */}
         <div>
           <div style={{
-            fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.85)',
-            letterSpacing: '0.18em', marginBottom: 8,
+            fontSize: 15, fontWeight: 600, color: 'var(--card-ink-strong)',
+            letterSpacing: '0.22em', marginBottom: 8,
             fontFamily: "'Montserrat', monospace",
+            fontVariantNumeric: 'tabular-nums',
           }}>
-            ●●●● &nbsp;●●●● &nbsp;●●●● &nbsp;{card.lastFourDigits ?? '····'}
+            •••• &nbsp;•••• &nbsp;•••• &nbsp;{card.lastFourDigits ?? '····'}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.10em', marginBottom: 2 }}>CARD HOLDER</div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.04em' }}>
+              <div style={{ fontSize: 8, color: 'var(--card-ink-faint)', letterSpacing: '0.10em', marginBottom: 2 }}>CARD HOLDER</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--card-ink-dim)', letterSpacing: '0.04em' }}>
                 {card.nameOnCard ?? 'BUNQSY USER'}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.10em', marginBottom: 2 }}>EXPIRES</div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+              <div style={{ fontSize: 8, color: 'var(--card-ink-faint)', letterSpacing: '0.10em', marginBottom: 2 }}>EXPIRES</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--card-ink-dim)' }}>
                 {card.expiryDate ?? '••/••'}
               </div>
             </div>
@@ -228,24 +254,24 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
 
       {/* Action area below card */}
       <div style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--ink-025)',
+        border: '1px solid var(--ink-060)',
         borderTop: 'none',
         borderRadius: '0 0 16px 16px',
         padding: '12px 16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#E2E8F0' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-strong)' }}>
               {cardTypeIcon(card.type)} {cardLabel}
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>
+            <div style={{ fontSize: 10, color: 'var(--ink-320)', marginTop: 2 }}>
               {frozen ? 'Card is currently frozen' : 'Tap to freeze for extra security'}
             </div>
           </div>
 
           {freezeState === 'done' ? (
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--hue-green)' }}>
               {frozen ? '✓ Frozen' : '✓ Active'}
             </div>
           ) : freezeState === 'error' ? (
@@ -257,7 +283,7 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
               style={{
                 padding: '7px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
                 background: frozen ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)',
-                color: frozen ? '#22c55e' : '#ef4444',
+                color: frozen ? 'var(--hue-green)' : '#ef4444',
                 fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
                 opacity: freezeState === 'executing' ? 0.6 : 1,
                 transition: 'opacity 0.15s',
@@ -274,13 +300,13 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
             marginTop: 12, padding: '12px 14px', borderRadius: 12,
             background: frozen ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
             border: `1px solid ${frozen ? 'rgba(34,197,94,0.20)' : 'rgba(239,68,68,0.20)'}`,
-            borderLeft: `3px solid ${frozen ? '#22c55e' : '#ef4444'}`,
+            borderLeft: `3px solid ${frozen ? 'var(--hue-green)' : '#ef4444'}`,
           }}>
             {/* Plan narration */}
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.55, marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: 'var(--ink-650)', lineHeight: 1.55, marginBottom: 10 }}>
               {narration}
             </div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginBottom: 10 }}>
+            <div style={{ fontSize: 9, color: 'var(--ink-250)', marginBottom: 10 }}>
               🔍 Narrated by Claude · PLAN → CONFIRM → EXECUTE
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -288,7 +314,7 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
                 onClick={() => { void handleFreezeClick(); }}
                 style={{
                   flex: 1, padding: '8px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  background: frozen ? '#22c55e' : '#ef4444', color: '#fff',
+                  background: frozen ? 'var(--hue-green)' : '#ef4444', color: 'var(--text-on-accent)',
                   fontSize: 12, fontWeight: 700,
                 }}
               >
@@ -298,8 +324,8 @@ function BunqCard({ card, idx, onRefresh, isSandboxDemo = false }: {
                 onClick={() => { void handleCancel(); }}
                 style={{
                   padding: '8px 16px', borderRadius: 10, cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)',
-                  color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600,
+                  background: 'var(--ink-070)', border: '1px solid var(--ink-100)',
+                  color: 'var(--ink-500)', fontSize: 12, fontWeight: 600,
                 }}
               >
                 Cancel
@@ -319,18 +345,18 @@ function BunqGoalsSection({ goals }: { goals: BunqGoalSummary[] }): React.JSX.El
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.042)',
-      border: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--ink-042)',
+      border: '1px solid var(--ink-080)',
       borderRadius: 22,
       padding: 20,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#06b6d4' }}>
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hue-teal)' }}>
           bunq Savings Goals
         </div>
         <div style={{
           fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100,
-          background: 'rgba(34,197,94,0.12)', color: '#22c55e', letterSpacing: '0.08em',
+          background: 'rgba(34,197,94,0.12)', color: 'var(--hue-green)', letterSpacing: '0.08em',
         }}>
           LIVE
         </div>
@@ -342,25 +368,25 @@ function BunqGoalsSection({ goals }: { goals: BunqGoalSummary[] }): React.JSX.El
           return (
             <div key={g.id} style={{
               padding: '14px 16px', borderRadius: 16,
-              background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderLeft: '3px solid #22c55e',
+              background: 'var(--ink-025)',
+              border: '1px solid var(--ink-060)',
+              borderLeft: '3px solid var(--hue-green)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0' }}>🎯 {g.name}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#22c55e' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-strong)' }}>🎯 {g.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--hue-green)' }}>
                   {g.currency}{g.currentAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
               </div>
-              <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+              <div style={{ height: 5, background: 'var(--ink-070)', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
                 <div style={{
                   height: '100%', borderRadius: 3, width: `${pct}%`,
-                  background: 'linear-gradient(90deg, #22c55e, #10b981)',
+                  background: 'linear-gradient(90deg, var(--hue-green), var(--hue-emerald))',
                   transition: 'width 1s cubic-bezier(0.4,0,0.2,1)',
                   boxShadow: '0 0 8px rgba(34,197,94,0.4)',
                 }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--ink-350)' }}>
                 <span>{Math.round(pct)}% of goal</span>
                 <span>Target: {g.currency}{g.targetAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
@@ -419,10 +445,10 @@ export function CardsPanel(): React.JSX.Element {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
             Cards
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', marginTop: 3 }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 3 }}>
             Live from bunq · freeze or manage below
           </div>
         </div>
@@ -439,7 +465,7 @@ export function CardsPanel(): React.JSX.Element {
       {loading ? (
         <div style={{
           padding: '40px 0', textAlign: 'center',
-          color: 'rgba(255,255,255,0.28)', fontSize: 13,
+          color: 'var(--ink-280)', fontSize: 13,
         }}>
           Fetching cards from bunq…
         </div>
@@ -450,15 +476,15 @@ export function CardsPanel(): React.JSX.Element {
           textAlign: 'center',
         }}>
           <div style={{ fontSize: 13, color: '#ef4444', marginBottom: 6 }}>Unable to load cards</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{error}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)', marginTop: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--ink-350)' }}>{error}</div>
+          <div style={{ fontSize: 10, color: 'var(--ink-220)', marginTop: 8 }}>
             Start the daemon and ensure BUNQ_API_KEY is set
           </div>
         </div>
       ) : cards.length === 0 ? (
         <div style={{
           padding: '40px 0', textAlign: 'center',
-          color: 'rgba(255,255,255,0.28)', fontSize: 13,
+          color: 'var(--ink-280)', fontSize: 13,
         }}>
           No cards found on this bunq account
         </div>
@@ -491,7 +517,7 @@ export function CardsPanel(): React.JSX.Element {
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
         <span style={{ fontSize: 14 }}>🛡</span>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 10, color: 'var(--ink-350)', lineHeight: 1.5 }}>
           All card actions require explicit confirmation via the PLAN → CONFIRM → EXECUTE gateway.
           BUNQSY never writes to bunq without your consent. Constitutional Rule #1 & #2.
         </div>

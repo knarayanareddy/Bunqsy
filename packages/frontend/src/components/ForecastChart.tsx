@@ -27,41 +27,41 @@ function CustomTooltip({ active, payload, label }: {
 
   return (
     <div style={{
-      background: '#0d0d12',
-      border: '1px solid rgba(255,255,255,0.12)',
+      background: 'var(--bg-elevated)',
+      border: '1px solid var(--ink-120)',
       borderRadius: '12px',
       padding: '14px 16px',
       minWidth: '200px',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+      boxShadow: 'var(--shadow-pop)',
     }}>
-      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginBottom: '8px', fontWeight: 600 }}>
+      <div style={{ fontSize: '11px', color: 'var(--ink-350)', marginBottom: '8px', fontWeight: 600 }}>
         {label}
       </div>
-      <div style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', marginBottom: '4px' }}>
+      <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
         €{point.projectedBalance.toLocaleString()}
       </div>
-      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginBottom: '10px' }}>
+      <div style={{ fontSize: '11px', color: 'var(--ink-250)', marginBottom: '10px' }}>
         Range: €{point.lowerBound.toLocaleString()} – €{point.upperBound.toLocaleString()}
       </div>
       {point.events.length > 0 && (
         <div style={{
-          borderTop: '1px solid rgba(255,255,255,0.07)',
+          borderTop: '1px solid var(--ink-070)',
           paddingTop: '8px',
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
         }}>
           {point.events.map((e, i) => (
-            <div key={i} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div key={i} style={{ fontSize: '11px', color: 'var(--ink-550)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>{EVENT_ICONS[e.type] ?? '•'}</span>
               <span>{e.description}</span>
               {e.amount !== undefined && (
-                <span style={{ color: e.type === 'SALARY' ? '#00ff95' : '#ff6b7a', fontWeight: 600, marginLeft: 'auto' }}>
+                <span style={{ color: e.type === 'SALARY' ? 'var(--accent-green)' : '#ff6b7a', fontWeight: 600, marginLeft: 'auto' }}>
                   {e.type === 'SALARY' ? '+' : '-'}€{e.amount}
                 </span>
               )}
               {e.probability < 1 && (
-                <span style={{ color: 'rgba(255,255,255,0.22)', marginLeft: 'auto' }}>{Math.round(e.probability * 100)}%</span>
+                <span style={{ color: 'var(--ink-220)', marginLeft: 'auto' }}>{Math.round(e.probability * 100)}%</span>
               )}
             </div>
           ))}
@@ -81,7 +81,7 @@ function CustomDot(props: {
   if (!payload?.events?.length) return null;
   const hasRisk = payload.events.some(e => e.type === 'IMPULSE_RISK' || e.type === 'RENT');
   if (!hasRisk) return null;
-  return <circle cx={cx} cy={cy} r={4} fill="#ff1500" stroke="#000" strokeWidth={2} />;
+  return <circle cx={cx} cy={cy} r={4} fill="#ff1500" stroke="var(--bg-base)" strokeWidth={2} />;
 }
 
 // ─── Milestone derivation ──────────────────────────────────────────────────────
@@ -123,14 +123,14 @@ function deriveMilestones(data: ForecastPoint[]): Milestone[] {
       label:  'Lowest Point',
       sub:    `Day ${lowestIdx + 1}`,
       amount: lowestPoint?.projectedBalance ?? 0,
-      color:  '#f59e0b',
+      color:  'var(--hue-amber)',
     },
     {
       icon:   '🚀',
       label:  'Post-Salary Peak',
       sub:    salaryIdx >= 0 ? `Day ${peakIdx + 1}` : 'No salary detected',
       amount: peakPoint?.projectedBalance ?? 0,
-      color:  '#00ff95',
+      color:  'var(--accent-green)',
     },
     {
       icon:   '🏡',
@@ -156,11 +156,11 @@ interface UpcomingEvent {
 }
 
 const EVENT_COLORS: Record<string, string> = {
-  RENT:         '#f59e0b',
-  SALARY:       '#00ff95',
-  SUBSCRIPTION: 'rgba(255,255,255,0.45)',
-  IMPULSE_RISK: '#ff6a00',
-  GOAL_MILESTONE: '#00bfff',
+  RENT:         'var(--hue-amber)',
+  SALARY:       'var(--accent-green)',
+  SUBSCRIPTION: 'var(--ink-450)',
+  IMPULSE_RISK: 'var(--hue-orange)',
+  GOAL_MILESTONE: 'var(--accent-cyan)',
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -235,7 +235,7 @@ export function ForecastChart(): React.JSX.Element {
     return (
       <div style={card}>
         <HeaderRow label="30-DAY FORECAST" />
-        <div style={{ textAlign: 'center', padding: '32px', fontSize: '13px', color: 'rgba(255,255,255,0.25)' }}>
+        <div style={{ textAlign: 'center', padding: '32px', fontSize: '13px', color: 'var(--ink-250)' }}>
           No forecast data yet — waiting for first heartbeat
         </div>
       </div>
@@ -259,17 +259,17 @@ export function ForecastChart(): React.JSX.Element {
       {/* Hero header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.28)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>
+          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--ink-280)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>
             30-Day Forecast
           </div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+          <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
             Predicted<br />Balance
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>
+          <div style={{ fontSize: 11, color: 'var(--ink-350)', marginTop: 6 }}>
             on {day30DateLabel}
           </div>
           {riskDayIdx > 0 && (
-            <div style={{ fontSize: 11, color: '#ff6a00', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--hue-orange)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
               ⚠️ Low balance warning Day {riskDayIdx + 1}
             </div>
           )}
@@ -277,13 +277,13 @@ export function ForecastChart(): React.JSX.Element {
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{
             fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1,
-            color: day30Balance > RENT_THRESHOLD ? '#00bfff' : '#ff6a00',
+            color: day30Balance > RENT_THRESHOLD ? 'var(--accent-cyan)' : 'var(--hue-orange)',
             fontFamily: "'Montserrat', sans-serif",
           }}>
             €{day30Balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 10, fontSize: 10, color: 'rgba(255,255,255,0.28)' }}>
-            <LegendItem color="#00bfff" label="Projected" type="line" />
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 10, fontSize: 10, color: 'var(--ink-280)' }}>
+            <LegendItem color="var(--accent-cyan)" label="Projected" type="line" />
             <LegendItem color="#ff1500" label="Rent line" type="dashed" />
           </div>
         </div>
@@ -295,26 +295,26 @@ export function ForecastChart(): React.JSX.Element {
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="forecastBalanceGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#00bfff" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#00bfff" stopOpacity={0.02} />
+                <stop offset="5%"  stopColor="var(--accent-cyan)" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="var(--accent-cyan)" stopOpacity={0.02} />
               </linearGradient>
               <linearGradient id="forecastBandGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#00bfff" stopOpacity={0.10} />
-                <stop offset="95%" stopColor="#00bfff" stopOpacity={0.02} />
+                <stop offset="5%"  stopColor="var(--accent-cyan)" stopOpacity={0.10} />
+                <stop offset="95%" stopColor="var(--accent-cyan)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--ink-040)" vertical={false} />
 
             <XAxis
               dataKey="dayLabel"
-              tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.22)' }}
+              tick={{ fontSize: 10, fill: 'var(--ink-220)' }}
               axisLine={false}
               tickLine={false}
               interval={4}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.22)' }}
+              tick={{ fontSize: 10, fill: 'var(--ink-220)' }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => `€${(v / 1000).toFixed(1)}k`}
@@ -332,17 +332,17 @@ export function ForecastChart(): React.JSX.Element {
 
             {/* Band: upper fill, then cut out with background */}
             <Area type="monotone" dataKey="upperBound"  stroke="none" fill="url(#forecastBandGrad)" fillOpacity={1} isAnimationActive={false} />
-            <Area type="monotone" dataKey="lowerBound"  stroke="none" fill="#000000"               fillOpacity={1} isAnimationActive={false} />
+            <Area type="monotone" dataKey="lowerBound"  stroke="none" fill="var(--bg-base)"               fillOpacity={1} isAnimationActive={false} />
 
             {/* Main balance line */}
             <Area
               type="monotone"
               dataKey="projectedBalance"
-              stroke="#00bfff"
+              stroke="var(--accent-cyan)"
               strokeWidth={2}
               fill="url(#forecastBalanceGrad)"
               dot={<CustomDot />}
-              activeDot={{ r: 5, fill: '#00bfff', stroke: '#000', strokeWidth: 2 }}
+              activeDot={{ r: 5, fill: 'var(--accent-cyan)', stroke: 'var(--bg-base)', strokeWidth: 2 }}
               isAnimationActive={true}
               animationDuration={800}
             />
@@ -357,8 +357,8 @@ export function ForecastChart(): React.JSX.Element {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
             {milestones.map(m => (
               <div key={m.label} style={{
-                background: 'rgba(255,255,255,0.025)',
-                border: `1px solid ${m.color}22`,
+                background: 'var(--ink-025)',
+                border: `1px solid color-mix(in srgb, ${m.color} 13%, transparent)`,
                 borderRadius: '14px',
                 padding: '14px 16px',
                 display: 'flex',
@@ -376,10 +376,10 @@ export function ForecastChart(): React.JSX.Element {
                 }}>
                   €{m.amount.toLocaleString('en-US')}
                 </div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.70)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-700)' }}>
                   {m.label}
                 </div>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
+                <div style={{ fontSize: '10px', color: 'var(--ink-300)' }}>
                   {m.sub}
                 </div>
               </div>
@@ -397,15 +397,15 @@ export function ForecastChart(): React.JSX.Element {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '8px',
-                background: 'rgba(255,255,255,0.06)',
+                background: 'var(--ink-060)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', flexShrink: 0,
               }}>📅</div>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-750)' }}>
                   Upcoming Events
                 </div>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.28)' }}>
+                <div style={{ fontSize: '10px', color: 'var(--ink-280)' }}>
                   Detected from transaction history
                 </div>
               </div>
@@ -417,25 +417,25 @@ export function ForecastChart(): React.JSX.Element {
                   padding: '11px 14px',
                   background: ev.highlight
                     ? (ev.isIncome ? 'rgba(0,255,149,0.04)' : 'rgba(245,158,11,0.04)')
-                    : 'rgba(255,255,255,0.02)',
+                    : 'var(--ink-020)',
                   border: `1px solid ${ev.highlight
                     ? (ev.isIncome ? 'rgba(0,255,149,0.12)' : 'rgba(245,158,11,0.15)')
-                    : 'rgba(255,255,255,0.05)'}`,
+                    : 'var(--ink-050)'}`,
                   borderRadius: '12px',
                 }}>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--ink-050)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '15px', flexShrink: 0,
                   }}>
                     {ev.icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.80)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {ev.label}
                     </div>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)', marginTop: '2px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--ink-300)', marginTop: '2px' }}>
                       {ev.daySub}
                     </div>
                   </div>
@@ -443,8 +443,8 @@ export function ForecastChart(): React.JSX.Element {
                     <div style={{
                       fontSize: '13px', fontWeight: 700, flexShrink: 0,
                       color: ev.isIncome
-                        ? '#00ff95'
-                        : EVENT_COLORS[Object.keys(EVENT_ICONS).find(k => EVENT_ICONS[k] === ev.icon) ?? ''] ?? 'rgba(255,255,255,0.55)',
+                        ? 'var(--accent-green)'
+                        : EVENT_COLORS[Object.keys(EVENT_ICONS).find(k => EVENT_ICONS[k] === ev.icon) ?? ''] ?? 'var(--ink-550)',
                     }}>
                       {ev.isIncome ? '+' : ''}€{ev.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
@@ -464,10 +464,10 @@ export function ForecastChart(): React.JSX.Element {
 function HeaderRow({ label, loading }: { label: string; loading?: boolean }): React.JSX.Element {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ fontSize: '11px', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.32)', fontWeight: 600, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: '11px', letterSpacing: '0.12em', color: 'var(--ink-320)', fontWeight: 600, textTransform: 'uppercase' }}>
         {label}
       </div>
-      {loading && <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>Updating…</span>}
+      {loading && <span style={{ fontSize: '11px', color: 'var(--ink-250)' }}>Updating…</span>}
     </div>
   );
 }
@@ -505,17 +505,17 @@ function SkeletonLoader(): React.JSX.Element {
 
 const retryBtn: React.CSSProperties = {
   background: 'transparent',
-  border: '1px solid rgba(255,255,255,0.12)',
+  border: '1px solid var(--ink-120)',
   borderRadius: '8px',
-  color: 'rgba(255,255,255,0.45)',
+  color: 'var(--ink-450)',
   fontSize: '12px',
   padding: '4px 10px',
   cursor: 'pointer',
 };
 
 const card: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--ink-040)',
+  border: '1px solid var(--ink-080)',
   borderRadius: '20px',
   padding: '28px',
   display: 'flex',

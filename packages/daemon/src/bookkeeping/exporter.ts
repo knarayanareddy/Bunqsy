@@ -51,11 +51,29 @@ export function exportToCSV(
   return lines.join('\r\n');
 }
 
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
+/**
+ * CSV escaping *and* formula-injection neutralisation.
+ *
+ * Counterparty names and descriptions come from the payment network and from
+ * Claude's receipt OCR — both attacker-influenced. A merchant called
+ * `=HYPERLINK("http://evil","refund")` or `@SUM(1+1)*cmd|'/c calc'!A1` executes
+ * when the accountant opens the export in Excel/Sheets/LibreOffice
+ * (CWE-1236). Prefixing with a single quote makes the cell inert text, and
+ * control characters are stripped so a value cannot forge new rows.
+ */
+export function escapeCSV(value: string): string {
+  const cleaned = value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+  const neutralised = /^[=+\-@\t\r]/.test(cleaned) ? `'${cleaned}` : cleaned;
+
+  if (/[",\n\r]/.test(neutralised)) {
+    return `"${neutralised.replace(/"/g, '""')}"`;
   }
-  return value;
+  return neutralised;
+}
+
+/** MT940 is newline-delimited: strip anything that could forge a field or record. */
+export function mt940Field(value: string): string {
+  return value.replace(/[\r\n:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 64) || 'UNKNOWN';
 }
 
 export function exportToMT940(
@@ -100,7 +118,7 @@ export function exportToMT940(
     const absAmount = Math.abs(amount).toFixed(2);
     const dateStr   = formatDate(row.date);
     lines.push(`:61:${dateStr}${dateStr}${cr}${absAmount}NONREF`);
-    lines.push(`:86:${row.category}/${escapeCSV(row.counterparty_name ?? 'UNKNOWN')}`);
+    lines.push(`:86:${mt940Field(row.category)}/${mt940Field(row.counterparty_name ?? 'UNKNOWN')}`);
     runningBalance += amount;
   }
 

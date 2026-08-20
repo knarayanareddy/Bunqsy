@@ -402,7 +402,7 @@ export function VoiceOrb({ onPlanConfirmed, activeIntervention, onActionTriggere
                 ? 'rgba(99,102,241,0.30)'
                 : 'rgba(0,191,255,0.20)',
             }}>
-              <span style={{ ...styles.bubbleRole, color: t.role === 'user' ? '#818cf8' : '#00bfff' }}>
+              <span style={{ ...styles.bubbleRole, color: t.role === 'user' ? '#818cf8' : 'var(--accent-cyan)' }}>
                 {t.role === 'user' ? 'You' : 'Kairos'}
               </span>
               <span style={styles.bubbleText}>{t.text}</span>
@@ -411,21 +411,21 @@ export function VoiceOrb({ onPlanConfirmed, activeIntervention, onActionTriggere
           {orbState === 'recording' && (
             <div style={{ ...styles.bubble, alignSelf: 'flex-end', background: 'rgba(239,68,68,0.10)', borderColor: 'rgba(239,68,68,0.25)' }}>
               <span style={{ ...styles.bubbleRole, color: '#f87171' }}>You</span>
-              <span style={{ ...styles.bubbleText, color: 'rgba(255,255,255,0.40)' }}>
+              <span style={{ ...styles.bubbleText, color: 'var(--ink-400)' }}>
                 <WaveAnimation />
               </span>
             </div>
           )}
           {orbState === 'processing' && (
             <div style={{ ...styles.bubble, alignSelf: 'flex-start', background: 'rgba(0,191,255,0.06)', borderColor: 'rgba(0,191,255,0.15)' }}>
-              <span style={{ ...styles.bubbleRole, color: '#00bfff' }}>Kairos</span>
-              <span style={{ ...styles.bubbleText, color: 'rgba(255,255,255,0.35)' }}>thinking…</span>
+              <span style={{ ...styles.bubbleRole, color: 'var(--accent-cyan)' }}>Kairos</span>
+              <span style={{ ...styles.bubbleText, color: 'var(--ink-350)' }}>thinking…</span>
             </div>
           )}
           {orbState === 'speaking' && (
             <div style={{ ...styles.bubble, alignSelf: 'flex-start', background: 'rgba(0,191,255,0.06)', borderColor: 'rgba(0,191,255,0.15)' }}>
-              <span style={{ ...styles.bubbleRole, color: '#00bfff' }}>Kairos</span>
-              <span style={{ ...styles.bubbleText, color: 'rgba(255,255,255,0.35)' }}><SpeakingDots /></span>
+              <span style={{ ...styles.bubbleRole, color: 'var(--accent-cyan)' }}>Kairos</span>
+              <span style={{ ...styles.bubbleText, color: 'var(--ink-350)' }}><SpeakingDots /></span>
             </div>
           )}
         </div>
@@ -471,7 +471,7 @@ export function VoiceOrb({ onPlanConfirmed, activeIntervention, onActionTriggere
             else if (orbState === 'recording') stopRecording();
           }
         }}
-        onFocus={(e) => { (e.currentTarget as HTMLElement).style.outline = '2px solid #00bfff'; (e.currentTarget as HTMLElement).style.outlineOffset = '2px'; }}
+        onFocus={(e) => { (e.currentTarget as HTMLElement).style.outline = '2px solid var(--accent-cyan)'; (e.currentTarget as HTMLElement).style.outlineOffset = '2px'; }}
         onBlur={(e) => { (e.currentTarget as HTMLElement).style.outline = 'none'; }}
       >
         <OrbInner state={orbState} convMode={convMode} />
@@ -534,7 +534,7 @@ function SpeakingDots(): React.JSX.Element {
       {[0,1,2].map(i => (
         <span key={i} style={{
           display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%',
-          background: '#00bfff',
+          background: 'var(--accent-cyan)',
           animation: 'speakBounce 1s ease-in-out infinite',
           animationDelay: `${i * 0.2}s`,
         }} />
@@ -648,7 +648,7 @@ function orbStyle(state: OrbState, convMode: boolean): React.CSSProperties {
     case 'speaking':
       return { ...base, background: 'radial-gradient(circle at 35% 35%, #22d3ee, #0891b2)', boxShadow: '0 0 28px rgba(34,211,238,0.60)', transform: 'scale(1.05)', animation: 'speakPulse 1.2s ease-in-out infinite' };
     case 'plan_ready':
-      return { ...base, background: 'radial-gradient(circle at 35% 35%, #4ade80, #22c55e)', boxShadow: '0 0 24px rgba(74,222,128,0.5)', transform: 'scale(0.92)' };
+      return { ...base, background: 'radial-gradient(circle at 35% 35%, #4ade80, var(--hue-green))', boxShadow: '0 0 24px rgba(74,222,128,0.5)', transform: 'scale(0.92)' };
     case 'error':
       return { ...base, background: 'radial-gradient(circle at 35% 35%, #f87171, #dc2626)', boxShadow: '0 0 24px rgba(220,38,38,0.5)' };
   }
@@ -678,13 +678,13 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase' as const,
   },
   bubbleText: {
-    fontSize: '12px', lineHeight: 1.45, color: 'rgba(255,255,255,0.80)',
+    fontSize: '12px', lineHeight: 1.45, color: 'var(--ink-800)',
   },
   controls: {
     display: 'flex', alignItems: 'center', gap: '10px', width: '100%', justifyContent: 'center',
   },
   hint: {
-    fontSize: '0.70rem', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em', minWidth: '80px', textAlign: 'center' as const,
+    fontSize: '0.70rem', color: 'var(--ink-280)', letterSpacing: '0.06em', minWidth: '80px', textAlign: 'center' as const,
   },
   convBtn: {
     background: 'rgba(52,211,153,0.10)', border: '1px solid rgba(52,211,153,0.28)',
@@ -704,7 +704,7 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: 260, animation: 'fadeSlideUp 0.3s ease both',
   },
   interventionHint: {
-    fontSize: '0.70rem', color: '#f59e0b', textAlign: 'center' as const,
+    fontSize: '0.70rem', color: 'var(--hue-amber)', textAlign: 'center' as const,
     maxWidth: 260, padding: '6px 10px', borderRadius: '8px',
     background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
   },
@@ -713,9 +713,9 @@ const styles: Record<string, React.CSSProperties> = {
 const innerStyles: Record<string, React.CSSProperties> = {
   micIcon:   { fontSize: '1.4rem', lineHeight: 1 },
   recordingRings: { position: 'relative', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.7)', animation: 'pulse 1.2s ease-out infinite' },
+  ring: { position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', border: '2px solid var(--ink-700)', animation: 'pulse 1.2s ease-out infinite' },
   micDot: { width: 10, height: 10, borderRadius: '50%', background: 'white' },
-  spinner: { width: 34, height: 34, borderRadius: '50%', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite' },
+  spinner: { width: 34, height: 34, borderRadius: '50%', border: '3px solid var(--ink-150)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite' },
   checkmark: { fontSize: '1.7rem', color: 'white', fontWeight: 700 },
   errorIcon: { fontSize: '1.4rem', color: 'white', fontWeight: 700 },
 };
@@ -723,18 +723,18 @@ const innerStyles: Record<string, React.CSSProperties> = {
 const cardStyles: Record<string, React.CSSProperties> = {
   card:      { padding: '16px', width: '100%', display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeSlideUp 0.35s ease both' },
   header:    { display: 'flex', flexDirection: 'column', gap: 3 },
-  title:     { fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, color: '#00bfff' },
-  transcript:{ fontSize: '0.70rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' },
-  narration: { fontSize: '0.85rem', lineHeight: 1.55, color: 'rgba(255,255,255,0.85)' },
-  hint:      { fontSize: '0.70rem', color: 'rgba(255,255,255,0.28)', textAlign: 'center' as const },
+  title:     { fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, color: 'var(--accent-cyan)' },
+  transcript:{ fontSize: '0.70rem', color: 'var(--ink-350)', fontStyle: 'italic' },
+  narration: { fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--ink-850)' },
+  hint:      { fontSize: '0.70rem', color: 'var(--ink-280)', textAlign: 'center' as const },
   steps:     { display: 'flex', flexDirection: 'column' as const, gap: 5 },
-  stepRow:   { display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' },
+  stepRow:   { display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 10px', borderRadius: '8px', background: 'var(--ink-040)' },
   stepIndex: { width: 16, height: 16, borderRadius: '50%', background: '#6366f1', color: 'white', fontSize: '0.60rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   stepBody:  { display: 'flex', flexDirection: 'column' as const, gap: 1 },
-  stepType:  { fontSize: '0.60rem', fontWeight: 700, letterSpacing: '0.08em', color: '#00bfff', textTransform: 'uppercase' as const },
-  stepDesc:  { fontSize: '0.72rem', color: 'rgba(255,255,255,0.60)' },
+  stepType:  { fontSize: '0.60rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--accent-cyan)', textTransform: 'uppercase' as const },
+  stepDesc:  { fontSize: '0.72rem', color: 'var(--ink-600)' },
   noSteps:   { padding: '6px 0', textAlign: 'center' as const },
   actions:   { display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 2 },
-  cancelBtn: { padding: '7px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', cursor: 'pointer' },
+  cancelBtn: { padding: '7px 14px', borderRadius: '8px', border: '1px solid var(--ink-120)', background: 'transparent', color: 'var(--ink-450)', fontSize: '0.75rem', cursor: 'pointer' },
   confirmBtn:{ padding: '7px 16px', borderRadius: '8px', border: 'none', background: '#6366f1', color: 'white', fontSize: '0.75rem', fontWeight: 700 },
 };

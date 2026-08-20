@@ -7,6 +7,26 @@ import { BunqWebhookEventSchema, type BunqWebhookEvent } from '@bunqsy/shared';
 
 const PRODUCTION_CIDR = '185.40.108.0/22';
 
+/**
+ * Normalises what Node hands us into a dotted-quad, or null if it is not IPv4.
+ * Node reports IPv4 peers as "::ffff:185.40.108.7" on dual-stack sockets, and
+ * the previous parser turned that (and any garbage) into 0.0.0.0 — which is a
+ * silent allow-list bypass waiting for the mask to be widened.
+ */
+function normaliseIpv4(ip: string): string | null {
+  const trimmed = ip.trim().replace(/^\[|\]$/g, '');
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(trimmed);
+  const candidate = mapped?.[1] ?? trimmed;
+
+  const parts = candidate.split('.');
+  if (parts.length !== 4) return null;
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return null;
+    if (Number(part) > 255) return null;
+  }
+  return candidate;
+}
+
 function ipToUint32(ip: string): number {
   const parts = ip.split('.');
   return parts.reduce((acc, octet) => (acc * 256 + parseInt(octet, 10)), 0) >>> 0;
@@ -29,7 +49,9 @@ export function isAllowedOrigin(remoteIp: string): boolean {
   if (process.env.BUNQ_ENV === 'sandbox') {
     return true;
   }
-  return isInCidr(remoteIp, PRODUCTION_CIDR);
+  const ipv4 = normaliseIpv4(remoteIp);
+  if (ipv4 === null) return false;  // IPv6-only or unparsable → not bunq
+  return isInCidr(ipv4, PRODUCTION_CIDR);
 }
 
 // ─── Signature validation ─────────────────────────────────────────────────────
@@ -41,12 +63,14 @@ export function isAllowedOrigin(remoteIp: string): boolean {
  */
 export function validateWebhookRequest(
   rawBody: string,
-  headers: Record<string, string>,
+  headers: Record<string, string | string[] | undefined>,
   session: BunqSession,
 ): boolean {
-  const signature =
-    headers['x-bunq-client-signature'] ?? headers['X-Bunq-Client-Signature'];
+  // Node lower-cases incoming header names; the mixed-case lookup was dead code.
+  const raw = headers['x-bunq-client-signature'];
+  const signature = Array.isArray(raw) ? raw[0] : raw;
   if (!signature) return false;
+  if (!session.serverPublicKey) return false;
   return verifyWebhookSignature(rawBody, signature, session.serverPublicKey);
 }
 

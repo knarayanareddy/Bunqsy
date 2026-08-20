@@ -8,9 +8,9 @@ const RADIUS = 80;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const EMOTION_CONFIG: Record<ScoreEmotion, { label: string; color: string; glow: string }> = {
-  THRIVING: { label: '✦ THRIVING', color: '#00ff95', glow: 'rgba(0,255,149,0.35)' },
-  CALM:     { label: '◎ CALM',     color: '#00bfff', glow: 'rgba(0,191,255,0.35)' },
-  ALERT:    { label: '⚡ ALERT',   color: '#f59e0b', glow: 'rgba(245,158,11,0.35)' },
+  THRIVING: { label: '✦ THRIVING', color: 'var(--accent-green)', glow: 'rgba(0,255,149,0.35)' },
+  CALM:     { label: '◎ CALM',     color: 'var(--accent-cyan)', glow: 'rgba(0,191,255,0.35)' },
+  ALERT:    { label: '⚡ ALERT',   color: 'var(--hue-amber)', glow: 'rgba(245,158,11,0.35)' },
   ANXIOUS:  { label: '⚠ ANXIOUS', color: '#ef4444', glow: 'rgba(239,68,68,0.35)' },
 };
 
@@ -27,8 +27,8 @@ function trendColor(trend: 'up' | 'down' | 'flat'): string {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 75) return '#00ff95';
-  if (score >= 50) return '#ff6a00';
+  if (score >= 75) return 'var(--accent-green)';
+  if (score >= 50) return 'var(--hue-orange)';
   return '#ff1500';
 }
 
@@ -75,7 +75,7 @@ export function BUNQSYScore({ score }: Props): React.JSX.Element {
           <circle
             cx={100} cy={100} r={RADIUS}
             fill="none"
-            stroke="rgba(255,255,255,0.07)"
+            stroke="var(--ink-070)"
             strokeWidth={10}
           />
           {/* Rainbow progress arc */}
@@ -99,7 +99,7 @@ export function BUNQSYScore({ score }: Props): React.JSX.Element {
             x={100} y={90}
             textAnchor="middle"
             dominantBaseline="middle"
-            style={{ fill: '#ffffff', fontSize: '2.6rem', fontWeight: 800, fontFamily: "'Montserrat', 'Inter', sans-serif" }}
+            style={{ fill: 'var(--text-primary)', fontSize: '2.6rem', fontWeight: 800, fontFamily: "'Montserrat', 'Inter', sans-serif" }}
           >
             {value}
           </text>
@@ -255,7 +255,7 @@ const barStyles: Record<string, React.CSSProperties> = {
     flex: 1,
     height: 4,
     borderRadius: 2,
-    background: 'rgba(255,255,255,0.08)',
+    background: 'var(--ink-080)',
     overflow: 'hidden',
   },
   fill: {

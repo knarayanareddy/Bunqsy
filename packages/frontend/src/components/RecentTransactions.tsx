@@ -90,7 +90,20 @@ export function RecentTransactions({ refreshKey = 0 }: Props): React.JSX.Element
       )}
 
       {!loading && rows.length === 0 && (
-        <div style={styles.empty}>No transactions yet</div>
+        <div style={{
+          ...styles.empty,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 10, padding: '28px 0 20px',
+        }}>
+          <span style={{ fontSize: 28 }} aria-hidden="true">🌙</span>
+          <div style={{ fontSize: 13, color: 'var(--ink-550)', fontWeight: 600 }}>Your feed is quiet</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-320)', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>
+            Fund the sandbox to wake up your guardian — or connect your bunq account.
+          </div>
+          <span style={{ fontSize: 10, color: 'var(--ink-180)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            BUNQSY is listening
+          </span>
+        </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -127,7 +140,7 @@ export function RecentTransactions({ refreshKey = 0 }: Props): React.JSX.Element
                     {tx.category && <> · {tx.category}</>}
                   </div>
                 </div>
-                <div style={{ ...styles.amount, color: positive ? '#00ff95' : '#CBD5E1' }}>
+                <div style={{ ...styles.amount, color: positive ? 'var(--accent-green)' : 'var(--text-soft)' }}>
                   {positive ? '+' : '−'}€{Math.abs(tx.amount).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -156,8 +169,8 @@ export function RecentTransactions({ refreshKey = 0 }: Props): React.JSX.Element
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: 'rgba(255,255,255,0.042)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'var(--ink-042)',
+    border: '1px solid var(--ink-080)',
     borderRadius: '22px',
     padding: '20px',
   },
@@ -172,15 +185,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     letterSpacing: '0.12em',
     textTransform: 'uppercase' as const,
-    color: 'rgba(255,255,255,0.32)',
+    color: 'var(--ink-320)',
   },
   count: {
     fontSize: '0.68rem',
-    color: 'rgba(255,255,255,0.2)',
+    color: 'var(--ink-200)',
   },
   empty: {
     fontSize: '0.8rem',
-    color: 'rgba(255,255,255,0.24)',
+    color: 'var(--ink-240)',
     textAlign: 'center' as const,
     padding: '24px 0',
   },
@@ -203,7 +216,7 @@ const styles: Record<string, React.CSSProperties> = {
   merchant: {
     fontSize: '13px',
     fontWeight: 600,
-    color: '#E2E8F0',
+    color: 'var(--text-strong)',
     letterSpacing: '-0.01em',
     overflow: 'hidden' as const,
     textOverflow: 'ellipsis' as const,
@@ -226,7 +239,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2px 6px',
     borderRadius: '4px',
     background: 'rgba(0,191,255,0.10)',
-    color: '#00bfff',
+    color: 'var(--accent-cyan)',
     letterSpacing: '0.04em',
     flexShrink: 0,
     whiteSpace: 'nowrap' as const,
@@ -240,13 +253,13 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2px 6px',
     borderRadius: '4px',
     background: 'rgba(255,106,0,0.10)',
-    color: '#ff6a00',
+    color: 'var(--hue-orange)',
     letterSpacing: '0.04em',
     flexShrink: 0,
   },
   meta: {
     fontSize: '10px',
-    color: 'rgba(255,255,255,0.26)',
+    color: 'var(--ink-260)',
     marginTop: '2px',
   },
   amount: {
@@ -257,7 +270,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   divider: {
     height: '1px',
-    background: 'rgba(255,255,255,0.04)',
+    background: 'var(--ink-040)',
     marginLeft: '50px',
   },
   expandBtn: {
@@ -265,9 +278,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '10px',
     padding: '8px',
     background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.07)',
+    border: '1px solid var(--ink-070)',
     borderRadius: '10px',
-    color: 'rgba(255,255,255,0.32)',
+    color: 'var(--ink-320)',
     fontSize: '11px',
     fontWeight: 600,
     letterSpacing: '0.04em',

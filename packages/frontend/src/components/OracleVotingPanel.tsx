@@ -10,9 +10,9 @@ interface Props {
 
 const statusStyles: Record<SimVote['status'], { color: string; bg: string; label: string }> = {
   PENDING:   { color: '#475569',  bg: 'rgba(71,85,105,0.08)',   label: '○ IDLE'       },
-  RUNNING:   { color: '#ff6a00',  bg: 'rgba(255,106,0,0.08)',   label: '◐ RUNNING'    },
-  CLEAR:     { color: '#00ff95',  bg: 'rgba(0,255,149,0.08)',   label: '✓ CLEAR'      },
-  WARN:      { color: '#ff6a00',  bg: 'rgba(255,106,0,0.08)',   label: '⚠ WARN'       },
+  RUNNING:   { color: 'var(--hue-orange)',  bg: 'rgba(255,106,0,0.08)',   label: '◐ RUNNING'    },
+  CLEAR:     { color: 'var(--accent-green)',  bg: 'rgba(0,255,149,0.08)',   label: '✓ CLEAR'      },
+  WARN:      { color: 'var(--hue-orange)',  bg: 'rgba(255,106,0,0.08)',   label: '⚠ WARN'       },
   INTERVENE: { color: '#ff1500',  bg: 'rgba(255,21,0,0.08)',    label: '🚨 INTERVENE' },
 };
 
@@ -22,8 +22,8 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--ink-040)',
+      border: '1px solid var(--ink-080)',
       borderRadius: '20px',
       padding: '28px',
       display: 'flex',
@@ -33,10 +33,10 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ fontSize: '11px', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.32)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>
+          <div style={{ fontSize: '11px', letterSpacing: '0.12em', color: 'var(--ink-320)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>
             RISK ORACLE
           </div>
-          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>6 independent sub-agents</div>
+          <div style={{ fontSize: '13px', color: 'var(--ink-550)' }}>6 independent sub-agents</div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
@@ -58,7 +58,7 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
               border: '1px solid rgba(0,255,149,0.30)',
               borderRadius: '100px',
               padding: '8px 16px',
-              color: fundState === 'error' ? '#ff6a00' : '#00ff95',
+              color: fundState === 'error' ? 'var(--hue-orange)' : 'var(--accent-green)',
               fontSize: '12px',
               fontWeight: 600,
               cursor: fundState === 'loading' || fundState === 'done' ? 'not-allowed' : 'pointer',
@@ -76,8 +76,8 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
             onClick={onTriggerFraud}
             disabled={running}
             style={{
-              background: running ? 'rgba(255,255,255,0.04)' : 'rgba(255,21,0,0.10)',
-              border: `1px solid ${running ? 'rgba(255,255,255,0.08)' : 'rgba(255,21,0,0.30)'}`,
+              background: running ? 'var(--ink-040)' : 'rgba(255,21,0,0.10)',
+              border: `1px solid ${running ? 'var(--ink-080)' : 'rgba(255,21,0,0.30)'}`,
               borderRadius: '100px',
               padding: '8px 16px',
               color: running ? '#475569' : '#ff1500',
@@ -105,8 +105,8 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
                 alignItems: 'center',
                 gap: '12px',
                 padding: '12px 16px',
-                background: vote.status !== 'PENDING' ? s.bg : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${vote.status !== 'PENDING' ? s.color + '28' : 'rgba(255,255,255,0.05)'}`,
+                background: vote.status !== 'PENDING' ? s.bg : 'var(--ink-020)',
+                border: `1px solid ${vote.status !== 'PENDING' ? s.color + '28' : 'var(--ink-050)'}`,
                 borderRadius: '12px',
                 transition: 'all 0.3s ease',
               }}
@@ -114,10 +114,10 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
               <div style={{ fontSize: '20px', flexShrink: 0 }}>{vote.icon}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#ffffff' }}>{vote.agent}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>{vote.agent}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {vote.status !== 'PENDING' && vote.confidence > 0 && (
-                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--ink-350)' }}>
                         {vote.confidence}%
                       </span>
                     )}
@@ -132,7 +132,7 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
                     </span>
                   </div>
                 </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.30)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '11px', color: 'var(--ink-300)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {vote.status === 'PENDING' ? 'Awaiting trigger...' : vote.message}
                 </div>
               </div>
@@ -162,24 +162,24 @@ export function OracleVotingPanel({ votes, verdict, running, onTriggerFraud }: P
             <div style={{
               fontSize: '13px',
               fontWeight: 800,
-              color: verdict.status === 'INTERVENE' ? '#ff1500' : verdict.status === 'WARN' ? '#ff6a00' : '#00ff95',
+              color: verdict.status === 'INTERVENE' ? '#ff1500' : verdict.status === 'WARN' ? 'var(--hue-orange)' : 'var(--accent-green)',
               letterSpacing: '0.05em',
               fontFamily: "'Montserrat', sans-serif",
             }}>
               {verdict.status === 'INTERVENE' ? '🚨 VERDICT: INTERVENE' : verdict.status === 'WARN' ? '⚠️ VERDICT: WARN' : '✅ VERDICT: CLEAR'}
             </div>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: verdict.status === 'INTERVENE' ? '#ff1500' : 'rgba(255,255,255,0.35)' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: verdict.status === 'INTERVENE' ? '#ff1500' : 'var(--ink-350)' }}>
               Risk Score: {verdict.riskScore}
             </div>
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '12px', color: 'var(--ink-550)', lineHeight: 1.5 }}>
             {verdict.narration}
           </div>
         </div>
       )}
 
       {isIdle && (
-        <div style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.18)', fontStyle: 'italic' }}>
+        <div style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: 'var(--ink-180)', fontStyle: 'italic' }}>
           Oracle is monitoring quietly. Trigger a fraud event above to see it activate.
         </div>
       )}

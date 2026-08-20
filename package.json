@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "demo": "npx localtunnel --port 5173"
+    "demo": "npx localtunnel --port 5173",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "tsc --noEmit -p packages/daemon/tsconfig.json && tsc --noEmit -p packages/frontend/tsconfig.json"
   },
   "workspaces": [
     "packages/*"
@@ -15,5 +17,8 @@
     "typescript": "latest",
     "dotenv": "latest"
   },
-  "packageManager": "npm@11.11.0"
+  "packageManager": "npm@11.11.0",
+  "overrides": {
+    "esbuild": "^0.28.2"
+  }
 }

@@ -61,7 +61,7 @@ function HoldButton({ label, color, bgColor, onComplete }: {
         flex: 1,
         position: 'relative',
         background: bgColor,
-        border: `1px solid ${color}40`,
+        border: `1px solid color-mix(in srgb, ${color} 25%, transparent)`,
         borderRadius: '14px',
         padding: '16px',
         color,
@@ -124,10 +124,22 @@ export function FraudBlock({ onAllow, onBlock, title, narration }: Props) {
         alignItems: 'stretch',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div
+            aria-hidden="true"
+            style={{
+              fontSize: '52px',
+              marginBottom: '4px',
+              display: 'inline-block',
+              animation: 'shake 0.5s ease',
+              filter: 'drop-shadow(0 8px 24px rgba(59,130,246,0.45)) drop-shadow(0 0 40px rgba(59,130,246,0.25))',
+            }}
+          >🔒</div>
           <div style={{
             fontSize: '48px',
+            marginTop: '-8px',
             marginBottom: '12px',
             animation: 'shake 0.5s ease',
+            filter: 'drop-shadow(0 4px 12px rgba(255,71,87,0.30))',
           }}>⚠️</div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#FF4757', marginBottom: '6px' }}>
             {title || 'Suspicious Transaction Detected'}
@@ -156,7 +168,23 @@ export function FraudBlock({ onAllow, onBlock, title, narration }: Props) {
             ].map(item => (
               <div key={item.label}>
                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}>{item.label}</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600 }}>{item.value}</div>
+                <div
+                  style={{
+                    fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600,
+                    ...(item.label === 'Merchant'
+                      ? {
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          padding: '2px 8px', borderRadius: 8,
+                          background: 'color-mix(in srgb, var(--hue-violet) 10%, transparent)',
+                          border: '1px solid color-mix(in srgb, var(--hue-violet) 35%, transparent)',
+                          boxShadow: '0 0 10px color-mix(in srgb, var(--hue-violet) 20%, transparent)',
+                        }
+                      : {}),
+                  }}
+                  title={item.label === 'Merchant' ? 'Counterparty could not be verified' : undefined}
+                >
+                  {item.value}{item.label === 'Merchant' ? ' 🔍' : ''}
+                </div>
               </div>
             ))}
           </div>
@@ -186,7 +214,7 @@ export function FraudBlock({ onAllow, onBlock, title, narration }: Props) {
 
         <div style={{
           background: 'rgba(0,0,0,0.3)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--ink-060)',
           borderRadius: '12px',
           padding: '14px',
           marginBottom: '24px',

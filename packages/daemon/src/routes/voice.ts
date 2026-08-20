@@ -18,6 +18,17 @@ import { createExecutionPlan, confirmPlan, executePlan, cancelPlan } from '../bu
 import { resolveIntervention } from '../memory/interventions.js';
 import { wsEmit } from './ws.js';
 import type { ScoreLogRow, UserProfileRow } from '@bunqsy/shared';
+import { IdParam, SpeakBody, UuidParam, parseOr400 } from '../security/validate.js';
+
+/**
+ * Spoken instructions are the most sensitive text this system handles — they
+ * contain names, amounts and IBANs. They are never written to the log unless an
+ * operator explicitly opts in for debugging.
+ */
+function redactTranscript(transcript: string): string {
+  if (process.env['LOG_TRANSCRIPTS'] === 'true') return transcript;
+  return `<${transcript.length} chars redacted — set LOG_TRANSCRIPTS=true to log>`;
+}
 
 interface AccountRow {
   jar_account_id: number;
@@ -79,14 +90,17 @@ export async function registerVoiceRoute(
           mimeType    = part.mimetype || 'audio/webm';
         } else if (part.type === 'field') {
           const val = String(part.value).trim();
-          if (part.fieldname === 'pendingPlanId'            && val) pendingPlanId            = val;
-          if (part.fieldname === 'activeInterventionId'     && val) activeInterventionId     = val;
-          if (part.fieldname === 'activeInterventionPlanId' && val) activeInterventionPlanId = val;
+          // These ids are used to confirm/execute plans — validate their shape
+          // before they can be used to look anything up.
+          if (part.fieldname === 'pendingPlanId'            && val) pendingPlanId            = parseOr400(UuidParam, val, 'pendingPlanId');
+          if (part.fieldname === 'activeInterventionId'     && val) activeInterventionId     = parseOr400(IdParam,   val, 'activeInterventionId');
+          if (part.fieldname === 'activeInterventionPlanId' && val) activeInterventionPlanId = parseOr400(UuidParam, val, 'activeInterventionPlanId');
         }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      return reply.status(400).send({ error: `Multipart parse error: ${message}` });
+      req.log.warn({ err: message }, 'multipart parse failed');
+      return reply.status(400).send({ error: 'Could not read the uploaded audio' });
     }
 
     if (!audioBuffer || audioBuffer.length === 0) {
@@ -100,14 +114,14 @@ export async function registerVoiceRoute(
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[voice] STT failed:', message);
-      return reply.status(502).send({ error: `Transcription failed: ${message}` });
+      return reply.status(502).send({ error: 'Transcription unavailable' });
     }
 
     if (!transcript) {
       return reply.status(422).send({ error: 'No speech detected in audio' });
     }
 
-    console.log(`[voice] Transcript: "${transcript}"`);
+    console.log(`[voice] Transcript: ${redactTranscript(transcript)}`);
 
     // ── Step 2: Classify intent ────────────────────────────────────────────────
     const intent = await classifyIntent(transcript);
@@ -130,8 +144,11 @@ export async function registerVoiceRoute(
             transcript,
           });
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          return reply.status(400).send({ error: message });
+          req.log.warn({ err }, 'voice plan action failed');
+          const safe = err instanceof Error && err.name === 'StepValidationError'
+            ? err.message
+            : 'Unable to complete that action';
+          return reply.status(400).send({ error: safe });
         }
       }
 
@@ -147,8 +164,11 @@ export async function registerVoiceRoute(
             transcript,
           });
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          return reply.status(400).send({ error: message });
+          req.log.warn({ err }, 'voice plan action failed');
+          const safe = err instanceof Error && err.name === 'StepValidationError'
+            ? err.message
+            : 'Unable to complete that action';
+          return reply.status(400).send({ error: safe });
         }
       }
 
@@ -181,8 +201,11 @@ export async function registerVoiceRoute(
             transcript,
           });
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          return reply.status(400).send({ error: message });
+          req.log.warn({ err }, 'voice plan action failed');
+          const safe = err instanceof Error && err.name === 'StepValidationError'
+            ? err.message
+            : 'Unable to complete that action';
+          return reply.status(400).send({ error: safe });
         }
       }
 
@@ -198,8 +221,11 @@ export async function registerVoiceRoute(
             transcript,
           });
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          return reply.status(400).send({ error: message });
+          req.log.warn({ err }, 'voice plan action failed');
+          const safe = err instanceof Error && err.name === 'StepValidationError'
+            ? err.message
+            : 'Unable to complete that action';
+          return reply.status(400).send({ error: safe });
         }
       }
 
@@ -263,13 +289,10 @@ export async function registerVoiceRoute(
 
   // ── POST /api/voice/speak ──────────────────────────────────────────────────
   fastify.post('/api/voice/speak', async (req: FastifyRequest, reply: FastifyReply) => {
-    const { text } = req.body as { text?: string };
-    if (!text?.trim()) {
-      return reply.status(400).send({ error: 'text is required' });
-    }
+    const { text } = parseOr400(SpeakBody, req.body ?? {}, 'body');
 
     try {
-      const audioBuffer = await textToSpeech(text.trim());
+      const audioBuffer = await textToSpeech(text);
       return reply
         .header('Content-Type', 'audio/mpeg')
         .header('Content-Length', String(audioBuffer.length))
@@ -277,7 +300,8 @@ export async function registerVoiceRoute(
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[voice] TTS failed:', message);
-      return reply.status(502).send({ error: message });
+      // Upstream errors can echo the API key holder / quota detail — keep it internal.
+      return reply.status(502).send({ error: 'Speech synthesis unavailable' });
     }
   });
 }

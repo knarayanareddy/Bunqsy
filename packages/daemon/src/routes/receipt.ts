@@ -5,10 +5,26 @@ import { extractReceipt } from '../receipt/extractor.js';
 import { verifyLineItems } from '../receipt/verifier.js';
 import { categorizeReceipt } from '../receipt/categorizer.js';
 import type { ReceiptResult } from '@bunqsy/shared';
+import { UuidParam, parseOr400 } from '../security/validate.js';
 
 const ALLOWED_MIME = new Set([
   'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
 ]);
+
+/**
+ * Magic-byte sniffing. `Content-Type` on a multipart part is whatever the
+ * client typed; the bytes are what Claude Vision (and anything downstream that
+ * ever writes this to disk) actually processes. Only these four containers are
+ * accepted, so an HTML/SVG/polyglot payload cannot ride in as "image/png".
+ */
+function sniffImageMime(buf: Buffer): string | null {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+  if (buf.subarray(0, 6).toString('latin1').startsWith('GIF8')) return 'image/gif';
+  if (buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP') return 'image/webp';
+  return null;
+}
 
 export async function registerReceiptRoute(fastify: FastifyInstance): Promise<void> {
   // ── POST /api/receipt ────────────────────────────────────────────────────────
@@ -28,20 +44,31 @@ export async function registerReceiptRoute(fastify: FastifyInstance): Promise<vo
       });
     }
 
-    const imageBuffer = await uploaded.toBuffer();
+    let imageBuffer: Buffer;
+    try {
+      imageBuffer = await uploaded.toBuffer();
+    } catch {
+      // @fastify/multipart throws once the configured fileSize limit is passed.
+      return reply.status(413).send({ error: 'Image too large' });
+    }
 
     if (imageBuffer.length === 0) {
       return reply.status(400).send({ error: 'Image file is empty' });
     }
 
+    const sniffed = sniffImageMime(imageBuffer);
+    if (sniffed === null) {
+      return reply.status(415).send({ error: 'File is not a JPEG, PNG, WebP or GIF image' });
+    }
+
     // ── Step 1: Claude Vision extraction ──────────────────────────────────────
     let receipt;
     try {
-      receipt = await extractReceipt(imageBuffer, mimeType);
+      receipt = await extractReceipt(imageBuffer, sniffed);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[receipt] Extraction failed:', message);
-      return reply.status(502).send({ error: `Receipt extraction failed: ${message}` });
+      return reply.status(502).send({ error: 'Receipt extraction unavailable' });
     }
 
     // ── Step 2: Self-verify line item sums ────────────────────────────────────
@@ -89,9 +116,10 @@ export async function registerReceiptRoute(fastify: FastifyInstance): Promise<vo
     '/api/receipt/:id/log-expense',
     async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
       const db = getDb();
+      const receiptId = parseOr400(UuidParam, req.params.id, 'receipt id');
       const row = db
         .prepare(`SELECT * FROM receipts WHERE id = ?`)
-        .get(req.params.id) as {
+        .get(receiptId) as {
           id: string; merchant: string; total: number; currency: string;
           date: string; category: string; logged_expense: number;
         } | undefined;

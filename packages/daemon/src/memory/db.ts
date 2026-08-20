@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { readFileSync } from 'fs';
+import { chmodSync, readFileSync } from 'fs';
 import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -19,6 +19,13 @@ export function getDb(): Database.Database {
   if (!_db) {
     const dbPath = process.env.DB_PATH ?? './bunqsy.db';
     _db = new Database(dbPath);
+
+    // This file stores the bunq session token and the RSA private key used to
+    // sign payment requests. Default umask leaves it world-readable, which on a
+    // shared or backed-up machine is a full account compromise.
+    for (const suffix of ['', '-wal', '-shm']) {
+      try { chmodSync(`${dbPath}${suffix}`, 0o600); } catch { /* not created yet */ }
+    }
     _db.pragma('journal_mode = WAL');
     _db.pragma('foreign_keys = ON');
     _db.pragma('busy_timeout = 5000');

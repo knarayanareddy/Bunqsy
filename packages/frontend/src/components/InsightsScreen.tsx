@@ -46,36 +46,43 @@ export interface InsightsProps {
   onDismissIntervention: (id: string) => void;
 }
 
+const PIE_DEMO_DATA = [
+  { label: 'Rent & Bills',  amount: 950.00, icon: '🏠' },
+  { label: 'Dining Out',    amount: 284.50, icon: '🍽️' },
+  { label: 'Groceries',     amount: 178.24, icon: '🛒' },
+  { label: 'Subscriptions', amount: 95.97,  icon: '🔄' },
+];
+
 // ─── Metadata maps ────────────────────────────────────────────────────────────
 
 const AGENT_META: Record<string, { title: string; icon: string; color: string; bg: string }> = {
   'subscription-watcher': { title: 'Spending Leak Found',     icon: '🔍', color: '#EF4444', bg: 'rgba(239,68,68,0.10)' },
-  'velocity-analyzer':    { title: 'Spending Spike Detected', icon: '⚡', color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
+  'velocity-analyzer':    { title: 'Spending Spike Detected', icon: '⚡', color: 'var(--hue-amber)', bg: 'rgba(245,158,11,0.10)' },
   'balance-sentinel':     { title: 'Balance Alert',           icon: '⚖️', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
   'fraud-shadow':         { title: 'Suspicious Activity',     icon: '🛡️', color: '#DC2626', bg: 'rgba(220,38,38,0.10)' },
   'pattern-matcher':      { title: 'Pattern Detected',        icon: '🔮', color: '#8B5CF6', bg: 'rgba(139,92,246,0.10)' },
-  'jar-optimizer':        { title: 'Savings Opportunity',     icon: '🐷', color: '#10B981', bg: 'rgba(16,185,129,0.10)' },
-  'rent-proximity-guard': { title: 'Rent Due Soon',           icon: '🏠', color: '#F97316', bg: 'rgba(249,115,22,0.10)' },
+  'jar-optimizer':        { title: 'Savings Opportunity',     icon: '🐷', color: 'var(--hue-emerald)', bg: 'rgba(16,185,129,0.10)' },
+  'rent-proximity-guard': { title: 'Rent Due Soon',           icon: '🏠', color: 'var(--hue-orange)', bg: 'rgba(249,115,22,0.10)' },
 };
 
 const ALL_AGENTS: Array<{ id: string; label: string; icon: string; color: string }> = [
   { id: 'balance-sentinel',     label: 'Balance Sentinel',     icon: '⚖️', color: '#3b82f6' },
-  { id: 'velocity-analyzer',    label: 'Velocity Analyzer',    icon: '⚡', color: '#22c55e' },
+  { id: 'velocity-analyzer',    label: 'Velocity Analyzer',    icon: '⚡', color: 'var(--hue-green)' },
   { id: 'pattern-matcher',      label: 'Pattern Matcher',      icon: '🔮', color: '#8b5cf6' },
   { id: 'subscription-watcher', label: 'Subscription Watcher', icon: '🔍', color: '#ef4444' },
-  { id: 'rent-proximity-guard', label: 'Rent Guard',           icon: '🏠', color: '#f97316' },
+  { id: 'rent-proximity-guard', label: 'Rent Guard',           icon: '🏠', color: 'var(--hue-orange)' },
   { id: 'fraud-shadow',         label: 'Fraud Shadow',         icon: '🛡️', color: '#dc2626' },
-  { id: 'jar-optimizer',        label: 'Jar Optimizer',        icon: '🐷', color: '#10b981' },
+  { id: 'jar-optimizer',        label: 'Jar Optimizer',        icon: '🐷', color: 'var(--hue-emerald)' },
 ];
 
 const ACTION_META: Record<string, { title: string; icon: string; color: string }> = {
-  'JAR_SWEEP':      { title: 'Auto-Round Up',            icon: '🐷', color: '#10B981' },
-  'SALARY':         { title: 'Invest Spare Cash',         icon: '🏦', color: '#F59E0B' },
+  'JAR_SWEEP':      { title: 'Auto-Round Up',            icon: '🐷', color: 'var(--hue-emerald)' },
+  'SALARY':         { title: 'Invest Spare Cash',         icon: '🏦', color: 'var(--hue-amber)' },
   'SUBSCRIPTION':   { title: 'Consolidate Subscriptions', icon: '📺', color: '#8B5CF6' },
-  'DREAM':          { title: 'Apply Dream Suggestion',    icon: '✨', color: '#00bfff' },
+  'DREAM':          { title: 'Apply Dream Suggestion',    icon: '✨', color: 'var(--accent-cyan)' },
   'BALANCE_LOW':    { title: 'Top Up Balance',            icon: '💰', color: '#EF4444' },
   'BALANCE_CRITICAL':{ title: 'Critical: Top Up Now',    icon: '🚨', color: '#DC2626' },
-  'VELOCITY_SPIKE': { title: 'Review Spending',          icon: '⚡', color: '#F59E0B' },
+  'VELOCITY_SPIKE': { title: 'Review Spending',          icon: '⚡', color: 'var(--hue-amber)' },
   'FRAUD':          { title: 'Block Suspicious Tx',       icon: '🛡️', color: '#DC2626' },
 };
 
@@ -83,18 +90,18 @@ const FEED_TYPE_META: Record<string, { icon: string; color: string }> = {
   'FRAUD':           { icon: '⚠️', color: '#ef4444' },
   'FREEZE_CARD':     { icon: '❄️', color: '#3b82f6' },
   'SUBSCRIPTION':    { icon: '🔄', color: '#8b5cf6' },
-  'BALANCE_LOW':     { icon: '💰', color: '#f59e0b' },
+  'BALANCE_LOW':     { icon: '💰', color: 'var(--hue-amber)' },
   'BALANCE_CRITICAL':{ icon: '🚨', color: '#dc2626' },
-  'VELOCITY_SPIKE':  { icon: '⚡', color: '#f59e0b' },
-  'JAR_SWEEP':       { icon: '🐷', color: '#10b981' },
-  'SALARY':          { icon: '💼', color: '#22c55e' },
-  'DREAM':           { icon: '🌙', color: '#00bfff' },
+  'VELOCITY_SPIKE':  { icon: '⚡', color: 'var(--hue-amber)' },
+  'JAR_SWEEP':       { icon: '🐷', color: 'var(--hue-emerald)' },
+  'SALARY':          { icon: '💼', color: 'var(--hue-green)' },
+  'DREAM':           { icon: '🌙', color: 'var(--accent-cyan)' },
 };
 
 const ACCOUNT_CLASS_COLOR: Record<string, string> = {
   primary: '#3b82f6',
-  savings: '#22c55e',
-  joint:   '#f59e0b',
+  savings: 'var(--hue-green)',
+  joint:   'var(--hue-amber)',
   other:   '#64748b',
 };
 
@@ -130,8 +137,8 @@ function DreamHeroCard({ dream, dreamBriefing }: { dream: DreamSession | null; d
       <div style={card.wrap}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', padding: '28px 0' }}>
           <span style={{ fontSize: 36 }}>🌙</span>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>No Dream Analysis Yet</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textAlign: 'center', maxWidth: 260 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>No Dream Analysis Yet</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-400)', textAlign: 'center', maxWidth: 260 }}>
             Run Dream Mode tonight to get AI-powered insights on your spending patterns while you sleep.
           </div>
         </div>
@@ -149,7 +156,7 @@ function DreamHeroCard({ dream, dreamBriefing }: { dream: DreamSession | null; d
   return (
     <div style={{
       ...card.wrap,
-      background: 'linear-gradient(135deg, rgba(0,30,50,0.95) 0%, rgba(0,20,40,0.98) 100%)',
+      background: 'var(--panel-cyan-grad)',
       border:     '1px solid rgba(0,191,255,0.18)',
       position:   'relative', overflow: 'hidden',
     }}>
@@ -161,17 +168,17 @@ function DreamHeroCard({ dream, dreamBriefing }: { dream: DreamSession | null; d
 
       {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#00bfff' }}>
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent-cyan)' }}>
           Dream Mode
         </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)' }}>Updated {updatedAgo}</div>
+        <div style={{ fontSize: 10, color: 'var(--ink-280)' }}>Updated {updatedAgo}</div>
       </div>
 
-      <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 8 }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 8 }}>
         Last Night's Analysis
       </div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.55, marginBottom: 18 }}>
-        {firstSentence}. We identified <strong style={{ color: '#00bfff' }}>{optimisations} key optimisations</strong> for your weekly budget.
+      <div style={{ fontSize: 12, color: 'var(--ink-550)', lineHeight: 1.55, marginBottom: 18 }}>
+        {firstSentence}. We identified <strong style={{ color: 'var(--accent-cyan)' }}>{optimisations} key optimisations</strong> for your weekly budget.
       </div>
 
       {/* Stat tiles — now 3: savings + optimisations + patterns */}
@@ -179,30 +186,30 @@ function DreamHeroCard({ dream, dreamBriefing }: { dream: DreamSession | null; d
         {/* Saved in Sleep tile */}
         <div style={{
           flex: 1, padding: '12px 14px', borderRadius: 14,
-          background: 'rgba(0,30,60,0.8)',
+          background: 'var(--panel-cyan-soft)',
           border: '1px solid rgba(0,191,255,0.18)',
           display: 'flex', flexDirection: 'column', gap: 3,
         }}>
           <span style={{ fontSize: 16 }}>✦</span>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#00bfff', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent-cyan)', letterSpacing: '-0.02em' }}>
             €{estimatedSavings}
           </div>
-          <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--ink-350)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
             Saved in Sleep
           </div>
         </div>
         {/* Patterns tile */}
         <div style={{
           flex: 1, padding: '12px 14px', borderRadius: 14,
-          background: 'rgba(0,40,30,0.7)',
+          background: 'var(--panel-green-soft)',
           border: '1px solid rgba(0,255,149,0.15)',
           display: 'flex', flexDirection: 'column', gap: 3,
         }}>
           <span style={{ fontSize: 16 }}>🌙</span>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#00ff95', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent-green)', letterSpacing: '-0.02em' }}>
             {(dream?.patternsUpdated ?? 0) + (dream?.patternsCreated ?? 0)} patterns
           </div>
-          <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--ink-350)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
             Learned
           </div>
         </div>
@@ -211,8 +218,8 @@ function DreamHeroCard({ dream, dreamBriefing }: { dream: DreamSession | null; d
       {/* DNA */}
       {active.dnaCard && (
         <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 10, background: 'rgba(0,191,255,0.06)', border: '1px solid rgba(0,191,255,0.12)' }}>
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#00bfff', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Financial DNA · </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>{active.dnaCard}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Financial DNA · </span>
+          <span style={{ fontSize: 11, color: 'var(--ink-650)' }}>{active.dnaCard}</span>
         </div>
       )}
     </div>
@@ -234,7 +241,7 @@ function SpendingBarsChart({ data }: { data: WeekDay[] }): React.JSX.Element {
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3b82f6' }} />
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-150)' }} />
         </div>
       </div>
 
@@ -250,7 +257,7 @@ function SpendingBarsChart({ data }: { data: WeekDay[] }): React.JSX.Element {
                 height: `${Math.max(pct * 100, minH)}%`,
                 background: isToday
                   ? 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)'
-                  : 'rgba(255,255,255,0.10)',
+                  : 'var(--ink-100)',
                 boxShadow: isToday ? '0 0 14px rgba(59,130,246,0.45)' : 'none',
                 transition: 'height 0.8s cubic-bezier(0.4,0,0.2,1)',
                 position: 'relative',
@@ -258,14 +265,14 @@ function SpendingBarsChart({ data }: { data: WeekDay[] }): React.JSX.Element {
                 {d.amount > 0 && (
                   <div style={{
                     position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)',
-                    fontSize: 8, fontWeight: 700, color: isToday ? '#60a5fa' : 'rgba(255,255,255,0.35)',
+                    fontSize: 8, fontWeight: 700, color: isToday ? '#60a5fa' : 'var(--ink-350)',
                     whiteSpace: 'nowrap',
                   }}>
                     {fmt(d.amount)}
                   </div>
                 )}
               </div>
-              <div style={{ fontSize: 9, color: isToday ? '#3b82f6' : 'rgba(255,255,255,0.28)', fontWeight: isToday ? 700 : 400 }}>
+              <div style={{ fontSize: 9, color: isToday ? '#3b82f6' : 'var(--ink-280)', fontWeight: isToday ? 700 : 400 }}>
                 {d.day}
               </div>
             </div>
@@ -288,7 +295,7 @@ function GoalRing({ goals }: { goals: Goal[] }): React.JSX.Element {
     return (
       <div style={{ ...card.wrap, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 200 }}>
         <span style={{ fontSize: 28 }}>🎯</span>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>No goals set</div>
+        <div style={{ fontSize: 13, color: 'var(--ink-350)' }}>No goals set</div>
       </div>
     );
   }
@@ -304,7 +311,7 @@ function GoalRing({ goals }: { goals: Goal[] }): React.JSX.Element {
                 key={i}
                 onClick={() => setIdx(i)}
                 style={{ width: 7, height: 7, borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0,
-                  background: i === idx ? '#ec4899' : 'rgba(255,255,255,0.15)' }}
+                  background: i === idx ? '#ec4899' : 'var(--ink-150)' }}
               />
             ))}
           </div>
@@ -312,7 +319,7 @@ function GoalRing({ goals }: { goals: Goal[] }): React.JSX.Element {
       </div>
 
       <svg width="130" height="130" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+        <circle cx="60" cy="60" r={r} fill="none" stroke="var(--ink-080)" strokeWidth="10" />
         <circle
           cx="60" cy="60" r={r} fill="none"
           stroke="url(#goalGrad)" strokeWidth="10"
@@ -328,20 +335,148 @@ function GoalRing({ goals }: { goals: Goal[] }): React.JSX.Element {
             <stop offset="100%" stopColor="#8b5cf6" />
           </linearGradient>
         </defs>
-        <text x="60" y="56" textAnchor="middle" fill="#fff" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif">
+        <text x="60" y="56" textAnchor="middle" fill="var(--text-primary)" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif">
           {Math.round(pct * 100)}%
         </text>
-        <text x="60" y="70" textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="8" fontFamily="Inter, sans-serif">
+        <text x="60" y="70" textAnchor="middle" fill="var(--ink-350)" fontSize="8" fontFamily="Inter, sans-serif">
           GOAL
         </text>
       </svg>
 
       <div style={{ marginTop: 8, textAlign: 'center' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{goal?.name}</div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{goal?.name}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-350)', marginTop: 3 }}>
           €{goal?.currentAmount.toLocaleString()} of €{goal?.targetAmount.toLocaleString()}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Category pie — bunq 4-colour donut with perimeter icons (audit §3, ref 10)
+
+interface CategorySlice { label: string; amount: number; icon: string }
+
+/** bunq's categorical wheel: purple → orange → yellow → red, in that order. */
+const PIE_HUES = ['var(--hue-purple)', 'var(--hue-orange)', 'var(--hue-yellow)', 'var(--hue-red)'] as const;
+
+/** Donut segment as a single filled path (outer arc → inner arc → close). */
+function donutPath(start: number, end: number, rOuter = 58, rInner = 36): string {
+  const a0 = start * 2 * Math.PI - Math.PI / 2;
+  const a1 = end   * 2 * Math.PI - Math.PI / 2;
+  const x0 = 60 + rOuter * Math.cos(a0), y0 = 60 + rOuter * Math.sin(a0);
+  const x1 = 60 + rOuter * Math.cos(a1), y1 = 60 + rOuter * Math.sin(a1);
+  const x2 = 60 + rInner * Math.cos(a1), y2 = 60 + rInner * Math.sin(a1);
+  const x3 = 60 + rInner * Math.cos(a0), y3 = 60 + rInner * Math.sin(a0);
+  const large = end - start > 0.5 ? 1 : 0;
+  return `M ${x0} ${y0} A ${rOuter} ${rOuter} 0 ${large} 1 ${x1} ${y1} `
+       + `L ${x2} ${y2} A ${rInner} ${rInner} 0 ${large} 0 ${x3} ${y3} Z`;
+}
+
+function CategoryPie({ data }: { data: CategorySlice[] }): React.JSX.Element {
+  const total = data.reduce((sum, d) => sum + d.amount, 0) || 1;
+
+  let acc = 0;
+  const slices = data.map((d, i) => {
+    const start = acc;
+    acc += d.amount / total;
+    return { ...d, start, end: acc, color: PIE_HUES[i % PIE_HUES.length]!, index: i };
+  });
+
+  return (
+    <div style={{ ...card.wrap, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+        <div style={card.title}>Spending by Category</div>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', color: 'var(--accent-cyan)' }}>THIS WEEK</div>
+      </div>
+
+      <div style={{ position: 'relative', width: 160, height: 160 }}>
+        <svg width={160} height={160} viewBox="0 0 120 120" role="img"
+             aria-label={`Spending by category, total ${Math.round(total)} euro`}>
+          {slices.map((sl) => (
+            <path
+              key={sl.label}
+              d={donutPath(sl.start, sl.end)}
+              fill={sl.color}
+              stroke="var(--bg-base)"
+              strokeWidth={1.5}
+            />
+          ))}
+          {/* Centre knob carries the running total (ref 10_pie_chart.png) */}
+          <circle cx={60} cy={60} r={28} fill="var(--bg-elevated)" stroke="var(--ink-060)" strokeWidth={1} />
+          <text x={60} y={58} textAnchor="middle" fill="var(--text-primary)"
+                fontSize={11} fontWeight={800} fontFamily="'Montserrat', sans-serif">
+            €{Math.round(total).toLocaleString('nl-NL')}
+          </text>
+          <text x={60} y={70} textAnchor="middle" fill="var(--ink-350)"
+                fontSize={7} fontWeight={600} letterSpacing={0.8}>TOTAL</text>
+        </svg>
+
+        {/* Category icons float on the perimeter, aligned to their segment */}
+        {slices.map((sl) => {
+          const mid = (sl.start + sl.end) / 2;
+          const a   = mid * 2 * Math.PI - Math.PI / 2;
+          return (
+            <div
+              key={`${sl.label}-icon`}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: 80 + 78 * Math.cos(a),
+                top:  80 + 78 * Math.sin(a),
+                transform: 'translate(-50%, -50%)',
+                width: 28, height: 28, borderRadius: 9,
+                background: sl.color,
+                border: '1px solid var(--on-tile-stroke-lift)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
+                boxShadow: `0 4px 12px color-mix(in srgb, ${sl.color} 33%, transparent)`,
+                animation: 'float 3s ease-in-out infinite',
+                animationDelay: `${sl.index * 0.2}s`,
+              }}
+            >
+              {sl.icon}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 16 }}>
+        {slices.map((sl) => (
+          <div key={`${sl.label}-legend`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--ink-650)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: sl.color, display: 'inline-block' }} />
+            {sl.label}
+            <span style={{ color: 'var(--ink-350)' }}>{Math.round((sl.amount / total) * 100)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── ESG impact — bunq Green globe (audit §6) ────────────────────────────────
+
+function GreenImpact({ trees }: { trees: number }): React.JSX.Element {
+  return (
+    <div style={{
+      ...card.wrap,
+      background: 'color-mix(in srgb, var(--esg-green) 6%, transparent)',
+      border: '1px solid color-mix(in srgb, var(--esg-green) 15%, transparent)',
+      borderLeft: '3px solid var(--esg-green)',
+      padding: 16,
+      display: 'flex', alignItems: 'center', gap: 12,
+    }}>
+      <span style={{ fontSize: 18 }} aria-hidden="true">🌍</span>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--esg-green)' }}>
+          You planted {trees} trees
+        </div>
+        <div style={{ fontSize: 10, color: 'var(--ink-450)', marginTop: 2 }}>
+          ESG impact · bunq Green
+        </div>
+      </div>
+      <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: 'var(--esg-green)' }}>
+        +{trees}
+      </span>
     </div>
   );
 }
@@ -359,17 +494,17 @@ function SecurityPosture({ fraudRiskScore }: { fraudRiskScore: number | null }):
   return (
     <div style={{
       ...card.wrap,
-      background: 'linear-gradient(135deg, rgba(0,20,15,0.95) 0%, rgba(0,10,20,0.98) 100%)',
+      background: 'var(--panel-green-grad)',
       border: '1px solid rgba(34,197,94,0.15)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#06b6d4' }}>
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hue-teal)' }}>
           Security Posture
         </div>
         <div style={{
           fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 100,
           background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
-          color: '#22c55e', letterSpacing: '0.08em',
+          color: 'var(--hue-green)', letterSpacing: '0.08em',
         }}>
           ● ACTIVE
         </div>
@@ -387,7 +522,7 @@ function SecurityPosture({ fraudRiskScore }: { fraudRiskScore: number | null }):
               <stop offset="100%" stopColor="#a855f7" />
             </linearGradient>
           </defs>
-          <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="9" />
+          <circle cx="50" cy="50" r={r} fill="none" stroke="var(--ink-070)" strokeWidth="9" />
           <circle cx="50" cy="50" r={r} fill="none"
             stroke="url(#securityRingGrad)" strokeWidth="9"
             strokeLinecap="round"
@@ -395,13 +530,13 @@ function SecurityPosture({ fraudRiskScore }: { fraudRiskScore: number | null }):
             strokeDashoffset={offset}
             style={{ transform: 'rotate(-90deg)', transformOrigin: '50px 50px', transition: 'stroke-dashoffset 1s ease' }}
           />
-          <text x="50" y="45" textAnchor="middle" fill="#fff" fontSize="16" fontWeight="800" fontFamily="Inter,sans-serif">{posture}</text>
-          <text x="50" y="58" textAnchor="middle" fill="#22c55e" fontSize="6" fontWeight="700" fontFamily="Inter,sans-serif" letterSpacing="2">{label}</text>
+          <text x="50" y="45" textAnchor="middle" fill="var(--text-primary)" fontSize="16" fontWeight="800" fontFamily="Inter,sans-serif">{posture}</text>
+          <text x="50" y="58" textAnchor="middle" fill="var(--hue-green)" fontSize="6" fontWeight="700" fontFamily="Inter,sans-serif" letterSpacing="2">{label}</text>
         </svg>
 
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Secure</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Secure</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-450)', lineHeight: 1.5 }}>
             Your financial perimeter is protected. No critical threats detected.
           </div>
         </div>
@@ -410,7 +545,7 @@ function SecurityPosture({ fraudRiskScore }: { fraudRiskScore: number | null }):
       {/* Single Write Gateway indicator */}
       <div style={{
         marginTop: 14, padding: '10px 14px', borderRadius: 12,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--ink-030)', border: '1px solid var(--ink-070)',
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
         <div style={{
@@ -419,8 +554,8 @@ function SecurityPosture({ fraudRiskScore }: { fraudRiskScore: number | null }):
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
         }}>🛡</div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#E2E8F0' }}>Single Write Gateway</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>All transfers authorised via BUNQSY</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-strong)' }}>Single Write Gateway</div>
+          <div style={{ fontSize: 10, color: 'var(--ink-350)', marginTop: 1 }}>All transfers authorised via BUNQSY</div>
         </div>
         {/* Toggle — always ON (constitutional rule) */}
         <div style={{
@@ -430,7 +565,7 @@ function SecurityPosture({ fraudRiskScore }: { fraudRiskScore: number | null }):
         }}>
           <div style={{
             position: 'absolute', right: 3, top: 3,
-            width: 16, height: 16, borderRadius: '50%', background: '#fff',
+            width: 16, height: 16, borderRadius: '50%', background: 'var(--text-on-accent)',
           }} />
         </div>
       </div>
@@ -444,14 +579,14 @@ function ActiveAgents({ votes, connected }: { votes: OracleVote[]; connected: bo
   return (
     <div style={card.wrap}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#06b6d4' }}>
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hue-teal)' }}>
           Active Agents
         </div>
         <div style={{
           fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 100,
-          background: connected ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
-          border: `1px solid ${connected ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`,
-          color: connected ? '#22c55e' : 'rgba(255,255,255,0.3)', letterSpacing: '0.08em',
+          background: connected ? 'rgba(34,197,94,0.12)' : 'var(--ink-060)',
+          border: `1px solid ${connected ? 'rgba(34,197,94,0.3)' : 'var(--ink-100)'}`,
+          color: connected ? 'var(--hue-green)' : 'var(--ink-300)', letterSpacing: '0.08em',
         }}>
           {connected ? '● LIVE' : '○ OFFLINE'}
         </div>
@@ -470,33 +605,33 @@ function ActiveAgents({ votes, connected }: { votes: OracleVote[]; connected: bo
           return (
             <div key={agent.id} style={{
               padding: '12px 14px', borderRadius: 14,
-              background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              background: 'var(--ink-025)',
+              border: '1px solid var(--ink-050)',
               display: 'flex', alignItems: 'center', gap: 12,
             }}>
               <div style={{
                 width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                background: `${agent.color}18`,
-                border: `1px solid ${agent.color}30`,
+                background: `color-mix(in srgb, ${agent.color} 9%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${agent.color} 19%, transparent)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
               }}>
                 {agent.icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#E2E8F0', marginBottom: 6, letterSpacing: '-0.01em' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-strong)', marginBottom: 6, letterSpacing: '-0.01em' }}>
                   {agent.label}
                 </div>
-                <div style={{ height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: 'var(--ink-070)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', borderRadius: 2,
                     width: confidence !== null ? `${confidence}%` : '0%',
                     background: agent.color,
                     transition: 'width 1s cubic-bezier(0.4,0,0.2,1)',
-                    boxShadow: confidence !== null && confidence > 0 ? `0 0 8px ${agent.color}60` : 'none',
+                    boxShadow: confidence !== null && confidence > 0 ? `0 0 8px color-mix(in srgb, ${agent.color} 38%, transparent)` : 'none',
                   }} />
                 </div>
                 {vote?.rationale && (
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', marginTop: 4, lineHeight: 1.4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: 9, color: 'var(--ink-280)', marginTop: 4, lineHeight: 1.4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                     {vote.rationale}
                   </div>
                 )}
@@ -518,16 +653,16 @@ function ActiveAgents({ votes, connected }: { votes: OracleVote[]; connected: bo
 // ─── Feature 4: Guardian Feed ─────────────────────────────────────────────────
 
 function statusPill(status: string): { label: string; color: string; bg: string } {
-  if (status === 'EXECUTED')  return { label: 'AUTO',      color: '#22c55e', bg: 'rgba(34,197,94,0.12)'   };
-  if (status === 'DISMISSED') return { label: 'DISMISSED', color: 'rgba(255,255,255,0.3)', bg: 'rgba(255,255,255,0.06)' };
-  return { label: 'READY', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' };
+  if (status === 'EXECUTED')  return { label: 'AUTO',      color: 'var(--hue-green)', bg: 'rgba(34,197,94,0.12)'   };
+  if (status === 'DISMISSED') return { label: 'DISMISSED', color: 'var(--ink-300)', bg: 'var(--ink-060)' };
+  return { label: 'READY', color: 'var(--hue-amber)', bg: 'rgba(245,158,11,0.12)' };
 }
 
 function feedBorderColor(item: InterventionRow): string {
-  if (item.status === 'EXECUTED')  return '#22c55e';
-  if (item.status === 'DISMISSED') return 'rgba(255,255,255,0.12)';
+  if (item.status === 'EXECUTED')  return 'var(--hue-green)';
+  if (item.status === 'DISMISSED') return 'var(--ink-120)';
   if (item.risk_score > 70) return '#ef4444';
-  if (item.risk_score > 40) return '#f59e0b';
+  if (item.risk_score > 40) return 'var(--hue-amber)';
   return '#3b82f6';
 }
 
@@ -546,13 +681,13 @@ function GuardianFeed({
     <div style={card.wrap}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={card.title}>Guardian Feed</div>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', color: '#06b6d4' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', color: 'var(--hue-teal)' }}>
           LIVE UPDATES
         </div>
       </div>
 
       {feed.length === 0 ? (
-        <div style={{ padding: '24px 0', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>
+        <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ink-250)', fontSize: 12 }}>
           No events yet — guardian is monitoring
         </div>
       ) : (
@@ -569,8 +704,8 @@ function GuardianFeed({
                 borderRadius: 16,
                 background: isActive && item.risk_score > 60
                   ? 'rgba(239,68,68,0.04)'
-                  : 'rgba(255,255,255,0.025)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                  : 'var(--ink-025)',
+                border: '1px solid var(--ink-060)',
                 borderLeft: `3px solid ${bord}`,
                 position: 'relative',
               }}>
@@ -578,8 +713,8 @@ function GuardianFeed({
                   {/* Icon */}
                   <div style={{
                     width: 36, height: 36, borderRadius: 11, flexShrink: 0,
-                    background: `${meta.color}18`,
-                    border: `1px solid ${meta.color}30`,
+                    background: `color-mix(in srgb, ${meta.color} 9%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${meta.color} 19%, transparent)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
                   }}>
                     {meta.icon}
@@ -588,14 +723,14 @@ function GuardianFeed({
                   {/* Body */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#E2E8F0', letterSpacing: '-0.01em' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-strong)', letterSpacing: '-0.01em' }}>
                         {item.type.replace(/_/g, ' ')}
                       </div>
-                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', flexShrink: 0 }}>
+                      <div style={{ fontSize: 9, color: 'var(--ink-280)', flexShrink: 0 }}>
                         {timeAgo(item.created_at)}
                       </div>
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ink-450)', lineHeight: 1.5, marginBottom: 8 }}>
                       {item.narration.length > 100 ? `${item.narration.slice(0, 100)}…` : item.narration}
                     </div>
 
@@ -619,7 +754,7 @@ function GuardianFeed({
                             }}
                             style={{
                               padding: '4px 12px', borderRadius: 100, border: 'none', cursor: 'pointer',
-                              background: '#ef4444', color: '#fff',
+                              background: '#ef4444', color: 'var(--text-on-accent)',
                               fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
                               opacity: acting === item.id ? 0.6 : 1,
                             }}
@@ -630,8 +765,8 @@ function GuardianFeed({
                             disabled={acting === item.id}
                             onClick={() => { onDismissIntervention(item.id); }}
                             style={{
-                              padding: '4px 12px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.12)',
-                              cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.5)',
+                              padding: '4px 12px', borderRadius: 100, border: '1px solid var(--ink-120)',
+                              cursor: 'pointer', background: 'transparent', color: 'var(--ink-500)',
                               fontSize: 10, fontWeight: 600, letterSpacing: '0.06em',
                             }}
                           >
@@ -669,22 +804,22 @@ function ConnectedAccounts({ summaries }: { summaries: AccountSummary[] }): Reac
           const initials = s.label.slice(0, 1).toUpperCase();
           const balEur = s.balanceCents / 100;
           const statusLabel = s.unusualSpendFlag ? 'RE-AUTH' : 'ACTIVE';
-          const statusColor = s.unusualSpendFlag ? '#ef4444' : '#22c55e';
+          const statusColor = s.unusualSpendFlag ? '#ef4444' : 'var(--hue-green)';
           const statusBg    = s.unusualSpendFlag ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)';
 
           return (
             <div key={s.account.id} style={{
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 16px', borderRadius: 16,
-              background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: 'var(--ink-025)',
+              border: '1px solid var(--ink-060)',
             }}>
               {/* Letter-avatar circle */}
               <div style={{
                 width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
                 background: col,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16, fontWeight: 800, color: '#fff',
+                fontSize: 16, fontWeight: 800, color: 'var(--text-primary)',
                 fontFamily: "'Montserrat', sans-serif",
               }}>
                 {initials}
@@ -692,17 +827,17 @@ function ConnectedAccounts({ summaries }: { summaries: AccountSummary[] }): Reac
 
               {/* Name + masked number */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', letterSpacing: '-0.01em' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-strong)', letterSpacing: '-0.01em' }}>
                   {s.label}
                 </div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: 'var(--ink-320)', marginTop: 2 }}>
                   ···· {String(s.account.id).slice(-4).padStart(4, '0')}
                 </div>
               </div>
 
               {/* Balance + status */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                   {s.currency}{balEur.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <div style={{
@@ -750,8 +885,8 @@ function ActionCard({ title, subtitle, icon, color, statusPillLabel, onApply }: 
     <div style={{
       display: 'flex', alignItems: 'center', gap: 14,
       padding: '14px 16px',
-      background: 'rgba(255,255,255,0.025)',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--ink-025)',
+      border: '1px solid var(--ink-060)',
       borderLeft: `3px solid ${color}`,   /* feature 2: colored left-border accent */
       borderRadius: 16,
       transition: 'border-color 0.2s',
@@ -759,8 +894,8 @@ function ActionCard({ title, subtitle, icon, color, statusPillLabel, onApply }: 
       {/* Icon */}
       <div style={{
         width: 42, height: 42, borderRadius: 13, flexShrink: 0,
-        background: `${color}22`,
-        border: `1px solid ${color}33`,
+        background: `color-mix(in srgb, ${color} 13%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${color} 20%, transparent)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 19,
       }}>
@@ -770,7 +905,7 @@ function ActionCard({ title, subtitle, icon, color, statusPillLabel, onApply }: 
       {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0', letterSpacing: '-0.01em' }}>{title}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-strong)', letterSpacing: '-0.01em' }}>{title}</div>
           {/* Feature 8: status pill */}
           {statusPillLabel && (
             <div style={{
@@ -778,12 +913,12 @@ function ActionCard({ title, subtitle, icon, color, statusPillLabel, onApply }: 
               background: statusPillLabel === 'READY'
                 ? 'rgba(34,197,94,0.15)'
                 : statusPillLabel === 'AUTO'
-                ? 'rgba(255,255,255,0.07)'
+                ? 'var(--ink-070)'
                 : 'rgba(59,130,246,0.12)',
               color: statusPillLabel === 'READY'
-                ? '#22c55e'
+                ? 'var(--hue-green)'
                 : statusPillLabel === 'AUTO'
-                ? 'rgba(255,255,255,0.4)'
+                ? 'var(--ink-400)'
                 : '#60a5fa',
               letterSpacing: '0.10em', flexShrink: 0,
             }}>
@@ -791,23 +926,23 @@ function ActionCard({ title, subtitle, icon, color, statusPillLabel, onApply }: 
             </div>
           )}
         </div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 2, lineHeight: 1.4 }}>{subtitle}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-380)', marginTop: 2, lineHeight: 1.4 }}>{subtitle}</div>
       </div>
 
       {/* CTA */}
       {confirmState === 'done' ? (
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#10B981', whiteSpace: 'nowrap' }}>Done ✓</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--hue-emerald)', whiteSpace: 'nowrap' }}>Done ✓</div>
       ) : confirmState === 'confirming' ? (
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <button
             onClick={() => { void handleApply(); }}
-            style={{ ...applyBtn, background: color, color: '#fff', padding: '6px 12px' }}
+            style={{ ...applyBtn, background: color, color: 'var(--text-on-accent)', padding: '6px 12px' }}
           >
             Yes
           </button>
           <button
             onClick={() => setConfirmState('idle')}
-            style={{ ...applyBtn, background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', padding: '6px 12px' }}
+            style={{ ...applyBtn, background: 'var(--ink-070)', color: 'var(--ink-500)', padding: '6px 12px' }}
           >
             No
           </button>
@@ -817,7 +952,7 @@ function ActionCard({ title, subtitle, icon, color, statusPillLabel, onApply }: 
           onClick={() => { void handleApply(); }}
           disabled={confirmState === 'loading'}
           style={{
-            ...applyBtn, background: '#3b82f6', color: '#fff', flexShrink: 0,
+            ...applyBtn, background: '#3b82f6', color: 'var(--text-on-accent)', flexShrink: 0,
             opacity: confirmState === 'loading' ? 0.6 : 1,
           }}
         >
@@ -839,7 +974,7 @@ function UpcomingExpenses({ forecastData }: { forecastData: ForecastPoint[] | nu
     return (
       <div style={card.wrap}>
         <div style={{ ...card.title, marginBottom: 12 }}>Upcoming Expenses</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', padding: '12px 0' }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-280)', padding: '12px 0' }}>
           No forecast data yet — run a heartbeat tick first
         </div>
       </div>
@@ -867,7 +1002,7 @@ function UpcomingExpenses({ forecastData }: { forecastData: ForecastPoint[] | nu
     return (
       <div style={card.wrap}>
         <div style={{ ...card.title, marginBottom: 12 }}>Upcoming Expenses</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', padding: '12px 0' }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-280)', padding: '12px 0' }}>
           No upcoming expenses detected in the next 30 days
         </div>
       </div>
@@ -882,28 +1017,28 @@ function UpcomingExpenses({ forecastData }: { forecastData: ForecastPoint[] | nu
           <div key={i} style={{
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '14px 16px', borderRadius: 16,
-            background: item.isRent ? 'rgba(0,191,255,0.04)' : 'rgba(255,255,255,0.025)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderLeft: item.isRent ? '3px solid #00bfff' : '3px solid rgba(255,255,255,0.10)',
+            background: item.isRent ? 'rgba(0,191,255,0.04)' : 'var(--ink-025)',
+            border: '1px solid var(--ink-060)',
+            borderLeft: item.isRent ? '3px solid var(--accent-cyan)' : '3px solid var(--ink-100)',
           }}>
             <div style={{
               width: 42, height: 42, borderRadius: 13, flexShrink: 0,
-              background: item.isRent ? 'rgba(0,191,255,0.12)' : 'rgba(255,255,255,0.06)',
+              background: item.isRent ? 'rgba(0,191,255,0.12)' : 'var(--ink-060)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
             }}>
               {EXPENSE_ICON[item.type] ?? '📌'}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0', letterSpacing: '-0.01em' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-strong)', letterSpacing: '-0.01em' }}>
                 {item.label}
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: 'var(--ink-350)', marginTop: 2 }}>
                 Due in {item.daysUntil} day{item.daysUntil !== 1 ? 's' : ''}
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
               {item.amount > 0 && (
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                   €{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               )}
@@ -911,8 +1046,8 @@ function UpcomingExpenses({ forecastData }: { forecastData: ForecastPoint[] | nu
                 <div style={{
                   fontSize: 9, fontWeight: 800, letterSpacing: '0.10em', padding: '2px 8px',
                   borderRadius: 100, textTransform: 'uppercase',
-                  background: item.isRent ? 'rgba(0,191,255,0.15)' : 'rgba(255,255,255,0.08)',
-                  color: item.isRent ? '#00bfff' : 'rgba(255,255,255,0.45)',
+                  background: item.isRent ? 'rgba(0,191,255,0.15)' : 'var(--ink-080)',
+                  color: item.isRent ? 'var(--accent-cyan)' : 'var(--ink-450)',
                 }}>
                   {item.isRent ? 'RECURRING' : 'AUTOPAY'}
                 </div>
@@ -936,14 +1071,14 @@ function KpiTiles({ kpis }: { kpis: Kpis | null }): React.JSX.Element {
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
       <div style={{
         ...card.wrap,
-        background: 'rgba(0,35,20,0.70)',
+        background: 'var(--panel-green-soft)',
         border: '1px solid rgba(34,197,94,0.14)',
-        borderLeft: '3px solid #22c55e',
+        borderLeft: '3px solid var(--hue-green)',
       }}>
         <div style={{ fontSize: 22, lineHeight: 1 }}>📈</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 10 }}>Saving Rate</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-450)', marginTop: 10 }}>Saving Rate</div>
         <div style={{
-          fontSize: 34, fontWeight: 800, color: '#22c55e',
+          fontSize: 34, fontWeight: 800, color: 'var(--hue-green)',
           letterSpacing: '-0.04em', lineHeight: 1, marginTop: 4,
           fontFamily: "'Montserrat', sans-serif",
         }}>
@@ -951,7 +1086,7 @@ function KpiTiles({ kpis }: { kpis: Kpis | null }): React.JSX.Element {
         </div>
         <div style={{
           fontSize: 11, marginTop: 6,
-          color: savingRateDelta > 0 ? '#22c55e' : savingRateDelta < 0 ? '#EF4444' : 'rgba(255,255,255,0.30)',
+          color: savingRateDelta > 0 ? 'var(--hue-green)' : savingRateDelta < 0 ? '#EF4444' : 'var(--ink-300)',
         }}>
           {savingRateDelta > 0 ? `+${savingRateDelta}%` : savingRateDelta < 0 ? `${savingRateDelta}%` : 'No change'} from last month
         </div>
@@ -959,12 +1094,12 @@ function KpiTiles({ kpis }: { kpis: Kpis | null }): React.JSX.Element {
 
       <div style={{
         ...card.wrap,
-        background: 'rgba(35,5,5,0.70)',
+        background: 'var(--panel-red-soft)',
         border: '1px solid rgba(239,68,68,0.14)',
         borderLeft: '3px solid #ef4444',
       }}>
         <div style={{ fontSize: 22, lineHeight: 1 }}>🔥</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 10 }}>Burn Rate</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-450)', marginTop: 10 }}>Burn Rate</div>
         <div style={{
           fontSize: 34, fontWeight: 800, color: '#EF4444',
           letterSpacing: '-0.04em', lineHeight: 1, marginTop: 4,
@@ -972,7 +1107,7 @@ function KpiTiles({ kpis }: { kpis: Kpis | null }): React.JSX.Element {
         }}>
           €{Math.round(burnRateDaily)}
         </div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.30)', marginTop: 6 }}>
+        <div style={{ fontSize: 11, color: 'var(--ink-300)', marginTop: 6 }}>
           Daily avg. spending
         </div>
       </div>
@@ -1025,7 +1160,7 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
   const actions: ActionItem[] = [];
 
   if (ws.intervention) {
-    const meta = ACTION_META[ws.intervention.type] ?? { title: ws.intervention.type, icon: '💡', color: '#00bfff' };
+    const meta = ACTION_META[ws.intervention.type] ?? { title: ws.intervention.type, icon: '💡', color: 'var(--accent-cyan)' };
     actions.push({
       key:        ws.intervention.id,
       title:      meta.title,
@@ -1046,7 +1181,7 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
   const jarVote = ws.votes.find(v => v.agentId === 'jar-optimizer' && v.riskScore > 40);
   if (jarVote && !actions.find(a => a.key === 'jar')) {
     actions.push({
-      key: 'jar', title: 'Auto-Round Up', icon: '🐷', color: '#10B981',
+      key: 'jar', title: 'Auto-Round Up', icon: '🐷', color: 'var(--hue-emerald)',
       statusPill: 'READY',
       subtitle: jarVote.rationale?.slice(0, 80) ?? 'Optimise your savings jars this week',
       onApply: async () => { await fetch('/api/dismiss/jar-suggestion', { method: 'POST' }).catch(() => {}); },
@@ -1056,7 +1191,7 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
   const dreamSuggestions = dreamBriefing?.suggestions ?? activeDream?.suggestions ?? [];
   dreamSuggestions.slice(0, 3 - actions.length).forEach((s, i) => {
     actions.push({
-      key: `dream-${i}`, title: 'Dream Suggestion', icon: '✨', color: '#00bfff',
+      key: `dream-${i}`, title: 'Dream Suggestion', icon: '✨', color: 'var(--accent-cyan)',
       statusPill: 'AUTO',
       subtitle: s.slice(0, 80) + (s.length > 80 ? '…' : ''),
       onApply: async () => { await Promise.resolve(); },
@@ -1065,10 +1200,10 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
 
   if (actions.length === 0) {
     actions.push(
-      { key: 'd1', title: 'Auto-Round Up', icon: '🐷', color: '#10B981',
+      { key: 'd1', title: 'Auto-Round Up', icon: '🐷', color: 'var(--hue-emerald)',
         statusPill: 'READY',
         subtitle: 'Save a little more each week automatically', onApply: async () => { await Promise.resolve(); } },
-      { key: 'd2', title: 'Invest Spare Cash', icon: '🏦', color: '#F59E0B',
+      { key: 'd2', title: 'Invest Spare Cash', icon: '🏦', color: 'var(--hue-amber)',
         statusPill: 'READY',
         subtitle: 'Expected 4.2% APY on idle balance', onApply: async () => { await Promise.resolve(); } },
       { key: 'd3', title: 'Review Subscriptions', icon: '📺', color: '#8B5CF6',
@@ -1097,6 +1232,17 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
 
       {/* KPI Tiles */}
       <KpiTiles kpis={data?.kpis ?? null} />
+
+      {/* Category pie + ESG impact (audit §3 / §6).
+          The daemon has no category breakdown endpoint yet, so this mirrors the
+          dashboard's demo categories — swap `PIE_DEMO_DATA` for live data the
+          moment /api/insights exposes it. */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24, alignItems: 'start' }}>
+        <CategoryPie data={PIE_DEMO_DATA} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <GreenImpact trees={12} />
+        </div>
+      </div>
 
       {/* Security Posture + Connected Accounts row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'start' }}>
@@ -1127,7 +1273,7 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
               marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '3px 10px',
               borderRadius: 100, letterSpacing: '0.08em',
               background: ws.verdict.aggregateRiskScore >= 70 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.12)',
-              color: ws.verdict.aggregateRiskScore >= 70 ? '#EF4444' : '#F59E0B',
+              color: ws.verdict.aggregateRiskScore >= 70 ? '#EF4444' : 'var(--hue-amber)',
             }}>
               Risk {Math.round(ws.verdict.aggregateRiskScore)}
             </div>
@@ -1135,7 +1281,7 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
         </div>
 
         {insights.length === 0 ? (
-          <div style={{ padding: '20px 0', textAlign: 'center', color: 'rgba(255,255,255,0.28)', fontSize: 12 }}>
+          <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--ink-280)', fontSize: 12 }}>
             {ws.connected
               ? 'Oracle is healthy — no alerts at this time'
               : 'Waiting for oracle data…'}
@@ -1143,26 +1289,26 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
             {insights.map(vote => {
-              const meta = AGENT_META[vote.agentId] ?? { title: vote.agentId, icon: '🔎', color: '#94A3B8', bg: 'rgba(148,163,184,0.08)' };
+              const meta = AGENT_META[vote.agentId] ?? { title: vote.agentId, icon: '🔎', color: 'var(--hue-slate)', bg: 'rgba(148,163,184,0.08)' };
               return (
                 <div key={vote.agentId} style={{
                   padding: '14px 16px', borderRadius: 14,
                   background: meta.bg,
-                  border: `1px solid ${meta.color}28`,
+                  border: `1px solid color-mix(in srgb, ${meta.color} 16%, transparent)`,
                   borderLeft: `3px solid ${meta.color}`,
                   display: 'flex', gap: 12, alignItems: 'flex-start',
                 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 11, flexShrink: 0,
-                    background: `${meta.color}22`, border: `1px solid ${meta.color}33`,
+                    background: `color-mix(in srgb, ${meta.color} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${meta.color} 20%, transparent)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 16,
                   }}>
                     {meta.icon}
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#E2E8F0', marginBottom: 4 }}>{meta.title}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.50)', lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-strong)', marginBottom: 4 }}>{meta.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-500)', lineHeight: 1.5 }}>
                       {vote.rationale ?? `Risk score: ${Math.round(vote.riskScore)}. ${vote.agentId.replace(/-/g, ' ')}.`}
                     </div>
                     <div style={{ marginTop: 6, fontSize: 10, fontWeight: 700, color: meta.color }}>
@@ -1214,16 +1360,16 @@ export function InsightsScreen({ ws, dreamBriefing, accountSummaries, onConfirmP
 
 const card = {
   wrap: {
-    background:   'rgba(255,255,255,0.042)',
-    border:       '1px solid rgba(255,255,255,0.08)',
+    background:   'var(--ink-042)',
+    border:       '1px solid var(--ink-080)',
     borderRadius: 22,
     padding:      20,
   } as React.CSSProperties,
   title: {
-    fontSize: 15, fontWeight: 700, color: '#E2E8F0', letterSpacing: '-0.01em',
+    fontSize: 15, fontWeight: 700, color: 'var(--text-strong)', letterSpacing: '-0.01em',
   } as React.CSSProperties,
   subtitle: {
-    fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2,
+    fontSize: 11, color: 'var(--ink-350)', marginTop: 2,
   } as React.CSSProperties,
 };
 

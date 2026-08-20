@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 
 /**
  * Schedules Dream Mode to fire at 2:00 AM in the user's local timezone.
@@ -7,6 +7,6 @@ import cron from 'node-cron';
 export function scheduleDreamMode(
   triggerDream: () => void,
   timezone: string,
-): cron.ScheduledTask {
+): ScheduledTask {
   return cron.schedule('0 2 * * *', triggerDream, { timezone });
 }

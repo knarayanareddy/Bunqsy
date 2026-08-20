@@ -1,3 +1,4 @@
+import { isDemoAllowed } from '../security/demo-guard.js';
 import { v4 as uuid } from 'uuid';
 import type Database from 'better-sqlite3';
 import type { WSMessage, ScoreLogRow } from '@bunqsy/shared';
@@ -56,7 +57,7 @@ export async function handleFundSandbox(
   accountId: number,
   triggerTick: (() => Promise<void>) | undefined,
 ): Promise<ActionResult> {
-  if (process.env['BUNQ_ENV'] === 'production') {
+  if (!isDemoAllowed()) {
     return { spokenResponse: 'Sandbox funding is only available in the sandbox environment.' };
   }
 
@@ -101,6 +102,10 @@ export function handleSimulateFraud(
   activeAID: number,
   triggerTick: (() => Promise<void>) | undefined,
 ): ActionResult {
+  if (!isDemoAllowed()) {
+    return { spokenResponse: 'Fraud simulation is only available in the sandbox environment.' };
+  }
+
   const txTime = new Date();
   txTime.setHours(2, 14, 0, 0);
 
@@ -125,6 +130,10 @@ export function handleSimulateSalary(
   activeAID: number,
   triggerTick: (() => Promise<void>) | undefined,
 ): ActionResult {
+  if (!isDemoAllowed()) {
+    return { spokenResponse: 'Salary simulation is only available in the sandbox environment.' };
+  }
+
   db.prepare(
     `INSERT INTO transactions
        (id, bunq_account_id, amount, currency, counterparty_name, description, category, created_at, synced_at)

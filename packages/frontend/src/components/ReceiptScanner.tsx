@@ -106,8 +106,10 @@ export function ReceiptScanner({ onResult, onExpenseLogged }: Props): React.JSX.
         <div
           style={{
             ...styles.dropZone,
-            borderColor: dragging ? 'var(--accent-blue)' : 'var(--glass-border)',
-            background: dragging ? 'rgba(99,102,241,0.08)' : 'var(--bg-surface-alt)',
+            borderColor: dragging ? 'var(--hue-orange)' : 'var(--glass-border)',
+            background: dragging
+              ? 'color-mix(in srgb, var(--hue-orange) 8%, transparent)'
+              : 'var(--bg-surface-alt)',
           }}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -172,7 +174,9 @@ function ScanPreview({
         <>
           <div style={previewStyles.overlay} />
           <div style={previewStyles.laser} />
-          <div style={previewStyles.scanLabel}>Analysing…</div>
+          <div style={{ ...previewStyles.scanLabel, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span aria-hidden="true">✈︎</span> Analysing…
+          </div>
         </>
       )}
     </div>
@@ -450,7 +454,7 @@ const previewStyles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#000',
+    background: 'var(--bg-base)',
   },
   img: {
     width: '100%',
@@ -469,8 +473,8 @@ const previewStyles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     height: 2,
-    background: 'linear-gradient(90deg, transparent, var(--accent-blue), transparent)',
-    boxShadow: '0 0 12px var(--accent-blue)',
+    background: 'linear-gradient(90deg, transparent, var(--hue-orange), transparent)',
+    boxShadow: '0 0 12px color-mix(in srgb, var(--hue-orange) 60%, transparent)',
     animation: 'laserScan 1.8s ease-in-out infinite',
   },
   scanLabel: {
@@ -616,7 +620,7 @@ const lineStyles: Record<string, React.CSSProperties> = {
     width: 48,
     height: 3,
     borderRadius: 2,
-    background: 'rgba(255,255,255,0.08)',
+    background: 'var(--ink-080)',
     overflow: 'hidden',
   },
   barFill: {

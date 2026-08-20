@@ -42,19 +42,19 @@ export function ExportModal({ onClose }: Props): React.JSX.Element {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{
-        background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.10)',
+        background: 'var(--bg-elevated)', border: '1px solid var(--ink-100)',
         borderRadius: '24px', padding: '32px', width: '440px', maxWidth: '95vw',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: '#fff', fontFamily: "'Montserrat', sans-serif", marginBottom: '4px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif", marginBottom: '4px' }}>
               Export Books
             </div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+            <div style={{ fontSize: '11px', color: 'var(--ink-350)' }}>
               Download for accountant · Exact Online · Belastingdienst
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ink-350)', cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>
             ✕
           </button>
         </div>
@@ -82,7 +82,7 @@ export function ExportModal({ onClose }: Props): React.JSX.Element {
           <button
             onClick={() => { void download('csv'); }}
             disabled={downloading !== null}
-            style={{ ...exportBtnStyle, borderColor: 'rgba(0,255,149,0.25)', color: '#00ff95' }}
+            style={{ ...exportBtnStyle, borderColor: 'rgba(0,255,149,0.25)', color: 'var(--accent-green)' }}
           >
             <span style={{ fontSize: '16px' }}>📊</span>
             <div style={{ flex: 1, textAlign: 'left' }}>
@@ -99,7 +99,7 @@ export function ExportModal({ onClose }: Props): React.JSX.Element {
           <button
             onClick={() => { void download('mt940'); }}
             disabled={downloading !== null}
-            style={{ ...exportBtnStyle, borderColor: 'rgba(0,191,255,0.25)', color: '#00bfff' }}
+            style={{ ...exportBtnStyle, borderColor: 'rgba(0,191,255,0.25)', color: 'var(--accent-cyan)' }}
           >
             <span style={{ fontSize: '16px' }}>🏦</span>
             <div style={{ flex: 1, textAlign: 'left' }}>
@@ -114,7 +114,7 @@ export function ExportModal({ onClose }: Props): React.JSX.Element {
           </button>
         </div>
 
-        <div style={{ marginTop: '20px', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'center', lineHeight: 1.6 }}>
+        <div style={{ marginTop: '20px', fontSize: '10px', color: 'var(--ink-200)', textAlign: 'center', lineHeight: 1.6 }}>
           Exports include categorized transactions only. Uncategorized transactions are excluded.
         </div>
       </div>
@@ -124,18 +124,18 @@ export function ExportModal({ onClose }: Props): React.JSX.Element {
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '6px',
+  textTransform: 'uppercase', color: 'var(--ink-350)', marginBottom: '6px',
 };
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: '8px', padding: '8px 10px', color: '#fff', fontSize: '12px',
+  width: '100%', background: 'var(--ink-040)', border: '1px solid var(--ink-100)',
+  borderRadius: '8px', padding: '8px 10px', color: 'var(--text-primary)', fontSize: '12px',
   fontFamily: 'inherit', boxSizing: 'border-box',
 };
 
 const exportBtnStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: '12px',
-  background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--ink-025)', border: '1px solid var(--ink-080)',
   borderRadius: '14px', padding: '14px 16px', cursor: 'pointer',
   fontFamily: 'inherit', width: '100%',
   transition: 'all 0.2s',
