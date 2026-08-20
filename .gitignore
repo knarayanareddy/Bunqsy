@@ -32,3 +32,6 @@ npm-debug.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Local daemon auth token (auto-generated, never commit)
+.bunqsy-token

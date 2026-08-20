@@ -26,6 +26,10 @@ import type { BunqSession } from './bunq/auth.js';
 import type { RecallSnapshot } from './heartbeat/recall.js';
 import { setAccountSummaries, setLastScore } from './state.js';
 import { registerNotificationFilter } from './bunq/execute.js';
+import { registerSecurity } from './security/plugin.js';
+import { getApiToken, tokenFingerprint, tokenLocationHint } from './security/token.js';
+import { allowedOrigins } from './security/origin.js';
+import { assertSafeConfig } from './security/config-check.js';
 
 // ─── Session persistence helpers ─────────────────────────────────────────────
 
@@ -72,6 +76,9 @@ function storeSession(session: BunqSession): void {
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 async function boot(): Promise<void> {
+  // Fail fast on an unsafe deployment rather than discovering it in production.
+  assertSafeConfig();
+
   const port = parseInt(process.env['PORT'] ?? '3001', 10);
 
   // ── Database ───────────────────────────────────────────────────────────────
@@ -95,7 +102,19 @@ async function boot(): Promise<void> {
   }
 
   // ── Fastify ────────────────────────────────────────────────────────────────
-  const fastify = Fastify({ logger: { level: 'warn' } });
+  const fastify = Fastify({
+    logger: { level: process.env['LOG_LEVEL'] ?? 'warn' },
+    // X-Forwarded-For is attacker-controlled unless a proxy we own rewrites it.
+    // The webhook IP allow-list depends on req.ip, so this stays off by default.
+    trustProxy: process.env['TRUST_PROXY'] === 'true',
+    // 1 MB is generous for bunq notifications; multipart has its own limit.
+    bodyLimit: 1_048_576,
+    disableRequestLogging: true,
+  });
+
+  // Auth, CSRF, rate limiting, security headers and the error handler —
+  // registered before any route so nothing can be added unguarded later.
+  registerSecurity(fastify);
 
   // CORS — required because frontend (5173) and daemon (3001) are different origins.
   // Bunq audit fix: without this, hard reloads / prod deployments 403.
@@ -116,7 +135,17 @@ async function boot(): Promise<void> {
   });
 
   // Register multipart once at the top level — shared by voice + receipt routes
-  await fastify.register(multipart, { limits: { fileSize: 25 * 1024 * 1024, files: 1 } });
+  // Claude Vision caps images around 5 MB base64; 8 MB raw is already generous
+  // and keeps a single upload from pinning memory on a laptop-sized daemon.
+  await fastify.register(multipart, {
+    limits: {
+      fileSize:  8 * 1024 * 1024,
+      files:     1,
+      fields:    10,
+      fieldSize: 8 * 1024,
+      parts:     15,
+    },
+  });
 
   let activeAID = 1;
   let webhookRegistered = false;
@@ -161,8 +190,17 @@ async function boot(): Promise<void> {
   });
 
   // ── Listen ─────────────────────────────────────────────────────────────────
-  await fastify.listen({ port, host: '0.0.0.0' });
-  console.log(`[bunqsy] Server listening on http://0.0.0.0:${port}`);
+  // Loopback by default: this process holds a bank session key and can move
+  // money. Binding 0.0.0.0 exposes it to every device on the network (and to
+  // any tunnel started by `npm run demo`), so it must be opted into explicitly.
+  const host = process.env['HOST'] ?? '127.0.0.1';
+  await fastify.listen({ port, host });
+  console.log(`[bunqsy] Server listening on http://${host}:${port}`);
+  if (host !== '127.0.0.1' && host !== 'localhost') {
+    console.warn(`[bunqsy] ⚠ Bound to ${host} — the daemon is reachable off-box. Ensure BUNQSY_API_TOKEN is set and the port is firewalled.`);
+  }
+  console.log(`[bunqsy] API token ${tokenFingerprint(getApiToken())} — source: ${tokenLocationHint()}`);
+  console.log(`[bunqsy] Allowed browser origins: ${allowedOrigins().join(', ') || '(none — set ALLOWED_ORIGINS)'}`);
 
   if (!webhookPublicUrl) {
     console.log('[bunqsy] WEBHOOK_PUBLIC_URL not set — webhook push disabled, polling only');
@@ -188,16 +226,39 @@ async function boot(): Promise<void> {
   console.log(`[bunqsy] Dream Mode scheduled at 02:00 ${timezone}`);
 
   // ── Graceful shutdown ──────────────────────────────────────────────────────
-  const shutdown = (): void => {
+  let shuttingDown = false;
+  const shutdown = (code = 0): void => {
+    if (shuttingDown) return;
+    shuttingDown = true;
     console.log('[bunqsy] Shutting down...');
     stopLoop();
     dreamTask.stop();
-    try { closeDb(); } catch { /* ignore */ }
-    void fastify.close().then(() => { process.exit(0); });
+
+    // Never hang a supervisor waiting on an in-flight bunq call.
+    const force = setTimeout(() => process.exit(code), 5_000);
+    force.unref();
+
+    void fastify.close()
+      .catch(() => { /* closing anyway */ })
+      .finally(() => {
+        try { closeDb(); } catch { /* ignore */ }
+        process.exit(code);
+      });
   };
 
-  process.on('SIGINT',  shutdown);
-  process.on('SIGTERM', shutdown);
+  process.on('SIGINT',  () => shutdown(0));
+  process.on('SIGTERM', () => shutdown(0));
+
+  // A rejected promise anywhere in the heartbeat, oracle or dream path would
+  // otherwise take the whole guardian down silently mid-demo.
+  process.on('unhandledRejection', (reason) => {
+    console.error('[bunqsy] Unhandled rejection:', reason instanceof Error ? reason.message : reason);
+  });
+  process.on('uncaughtException', (err) => {
+    // An unknown-state process must not keep signing bank requests.
+    console.error('[bunqsy] Uncaught exception — shutting down:', err.message);
+    shutdown(1);
+  });
 }
 
 boot().catch((err: unknown) => {

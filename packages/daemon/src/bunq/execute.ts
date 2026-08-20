@@ -10,6 +10,7 @@
 import { v4 as uuid } from 'uuid';
 import { signRequestBody } from './signing.js';
 import { getDb } from '../memory/db.js';
+import { validateSteps, validateStep, pathSegment } from './step-validation.js';
 import type {
   ExecutionStep,
   ExecutionPlan,
@@ -35,11 +36,15 @@ export async function createExecutionPlan(
   steps: ExecutionStep[],
   narratedText: string,
 ): Promise<ExecutionPlan> {
+  // Gate 1 of 2: reject unsafe payloads before they are persisted, so a bad
+  // plan can never be confirmed later by a caller who did not create it.
+  const safeSteps = validateSteps(steps);
+
   const plan: ExecutionPlan = {
     id: uuid(),
     createdAt: new Date(),
-    narratedText,
-    steps,
+    narratedText: narratedText.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 2000),
+    steps: safeSteps,
     status: 'PENDING',
   };
 
@@ -85,7 +90,9 @@ export async function executePlan(planId: string): Promise<void> {
     throw new Error(`Plan ${planId} must be CONFIRMED before execution (current: ${row.status})`);
   }
 
-  const steps = JSON.parse(row.steps) as ExecutionStep[];
+  // Gate 2 of 2: re-validate at execution time. The row may predate the current
+  // validation rules, or have been written by another process sharing the DB.
+  const steps = validateSteps(JSON.parse(row.steps) as ExecutionStep[]);
 
   // SRE offline fallback — short-circuit bunq writes when sandbox is down.
   // Plans still go through CONFIRMED → EXECUTED lifecycle so the UI demo works.
@@ -187,7 +194,7 @@ export async function registerNotificationFilter(
   if (!sessionRow) throw new Error('No active session for webhook registration');
 
   const baseUrl = getBunqBaseUrl();
-  const path    = `/user/${userId}/monetary-account/${accountId}/notification-filter-url`;
+  const path    = `/user/${pathSegment(userId)}/monetary-account/${pathSegment(accountId)}/notification-filter-url`;
   const body    = JSON.stringify({
     notification_filters: [
       { category: 'PAYMENT',  notification_target: callbackUrl },
@@ -240,13 +247,17 @@ interface BunqRequest {
 }
 
 function buildStepRequest(step: ExecutionStep, userId: number): BunqRequest {
-  const payload = step.payload as Record<string, unknown>;
+  // Never trust the caller's payload shape here either — validateStep() coerces
+  // ids to integers and constrains cardEndpoint to a known set, which is what
+  // stops "cardEndpoint=../../monetary-account/1/payment" reaching bunq signed.
+  const payload = validateStep(step).payload as Record<string, unknown>;
+  const uid = pathSegment(userId);
 
   switch (step.type) {
     case 'PAYMENT':
       return {
         method: 'POST',
-        path: `/user/${userId}/monetary-account/${payload['fromAccountId']}/payment`,
+        path: `/user/${uid}/monetary-account/${pathSegment(payload['fromAccountId'] as number)}/payment`,
         body: {
           amount: { value: String(payload['amount']), currency: payload['currency'] ?? 'EUR' },
           counterparty_alias: {
@@ -261,7 +272,7 @@ function buildStepRequest(step: ExecutionStep, userId: number): BunqRequest {
     case 'SAVINGS_TRANSFER':
       return {
         method: 'POST',
-        path: `/user/${userId}/monetary-account/${payload['fromAccountId']}/payment`,
+        path: `/user/${uid}/monetary-account/${pathSegment(payload['fromAccountId'] as number)}/payment`,
         body: {
           amount: { value: String(payload['amount']), currency: payload['currency'] ?? 'EUR' },
           counterparty_alias: {
@@ -275,7 +286,7 @@ function buildStepRequest(step: ExecutionStep, userId: number): BunqRequest {
     case 'DRAFT_PAYMENT':
       return {
         method: 'POST',
-        path: `/user/${userId}/draft-payment`,
+        path: `/user/${uid}/draft-payment`,
         body: {
           number_of_required_accepts: 1,
           entries: [payload['entry']],
@@ -285,14 +296,14 @@ function buildStepRequest(step: ExecutionStep, userId: number): BunqRequest {
     case 'CANCEL_DRAFT':
       return {
         method: 'DELETE',
-        path: `/user/${userId}/draft-payment/${payload['draftPaymentId']}`,
+        path: `/user/${uid}/draft-payment/${pathSegment(payload['draftPaymentId'] as number)}`,
         body: {},
       };
 
     case 'SANDBOX_FUND':
       return {
         method: 'POST',
-        path: `/user/${userId}/monetary-account/${payload['accountId']}/request-inquiry`,
+        path: `/user/${uid}/monetary-account/${pathSegment(payload['accountId'] as number)}/request-inquiry`,
         body: {
           amount_inquired: {
             value:    String(payload['amount'] ?? '500'),
@@ -311,21 +322,21 @@ function buildStepRequest(step: ExecutionStep, userId: number): BunqRequest {
     case 'CARD_FREEZE':
       return {
         method: 'PUT',
-        path: `/user/${userId}/${payload['cardEndpoint'] ?? 'card-debit'}/${payload['cardId']}`,
+        path: `/user/${uid}/${pathSegment((payload['cardEndpoint'] as string) ?? 'card-debit')}/${pathSegment(payload['cardId'] as number)}`,
         body: { status: 'DEACTIVATED' },
       };
 
     case 'CARD_UNFREEZE':
       return {
         method: 'PUT',
-        path: `/user/${userId}/${payload['cardEndpoint'] ?? 'card-debit'}/${payload['cardId']}`,
+        path: `/user/${uid}/${pathSegment((payload['cardEndpoint'] as string) ?? 'card-debit')}/${pathSegment(payload['cardId'] as number)}`,
         body: { status: 'ACTIVE' },
       };
 
     case 'CREATE_SAVINGS_GOAL':
       return {
         method: 'POST',
-        path: `/user/${userId}/monetary-account/${payload['accountId']}/savings-goal`,
+        path: `/user/${uid}/monetary-account/${pathSegment(payload['accountId'] as number)}/savings-goal`,
         body: {
           name:        payload['name'],
           goal_amount: { value: String(payload['amount']), currency: payload['currency'] ?? 'EUR' },

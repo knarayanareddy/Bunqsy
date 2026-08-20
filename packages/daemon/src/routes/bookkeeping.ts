@@ -8,6 +8,16 @@ import { getUncategorizedCount } from '../bookkeeping/ledger.js';
 import type { TaxCategory } from '@bunqsy/shared';
 import { TaxCategorySchema } from '@bunqsy/shared';
 import { wsEmit } from './ws.js';
+import { IdParam, IsoDate, QuarterParam, YearParam, parseOr400, safeFilenamePart } from '../security/validate.js';
+
+/** Shared date-window parser for the report + export endpoints. */
+function dateWindow(query: { start?: string; end?: string }): { start: string; end: string } {
+  const now = new Date();
+  const start = parseOr400(IsoDate, query.start ?? `${now.getFullYear()}-01-01`, 'start');
+  const end   = parseOr400(IsoDate, query.end   ?? now.toISOString().slice(0, 10), 'end');
+  if (start > end) throw new (class extends Error { statusCode = 400; })('start must be before end');
+  return { start, end };
+}
 
 export async function registerBookkeepingRoutes(
   fastify: FastifyInstance,
@@ -25,7 +35,7 @@ export async function registerBookkeepingRoutes(
   fastify.post(
     '/api/bookkeeping/review-queue/:entryId/approve',
     async (req: FastifyRequest<{ Params: { entryId: string }; Body: { categoryOverride?: string } }>, reply: FastifyReply) => {
-      const { entryId } = req.params;
+      const entryId = parseOr400(IdParam, req.params.entryId, 'entryId');
       const body        = req.body as { categoryOverride?: string } | undefined;
       let override: TaxCategory | undefined;
 
@@ -58,10 +68,8 @@ export async function registerBookkeepingRoutes(
   fastify.get(
     '/api/bookkeeping/pl',
     async (req: FastifyRequest<{ Querystring: { start?: string; end?: string } }>, reply: FastifyReply) => {
-      const now = new Date();
-      const start = req.query.start ?? `${now.getFullYear()}-01-01`;
-      const end   = req.query.end   ?? now.toISOString().slice(0, 10);
-      const pl    = generateProfitAndLoss(db, start, end);
+      const { start, end } = dateWindow(req.query);
+      const pl = generateProfitAndLoss(db, start, end);
       return reply.send(pl);
     },
   );
@@ -70,7 +78,7 @@ export async function registerBookkeepingRoutes(
   fastify.get(
     '/api/bookkeeping/tax-summary',
     async (req: FastifyRequest<{ Querystring: { year?: string } }>, reply: FastifyReply) => {
-      const year = parseInt(req.query.year ?? String(new Date().getFullYear()), 10);
+      const year = parseOr400(YearParam, req.query.year ?? new Date().getFullYear(), 'year');
       const summary = generateTaxSummary(db, year);
       return reply.send(summary);
     },
@@ -86,8 +94,8 @@ export async function registerBookkeepingRoutes(
   fastify.post(
     '/api/bookkeeping/vat/:quarter/file',
     async (req: FastifyRequest<{ Params: { quarter: string }; Body: { year?: number } }>, reply: FastifyReply) => {
-      const quarter = parseInt(req.params.quarter, 10);
-      const year    = (req.body as { year?: number } | undefined)?.year ?? new Date().getFullYear();
+      const quarter = parseOr400(QuarterParam, req.params.quarter, 'quarter');
+      const year    = parseOr400(YearParam, (req.body as { year?: number } | undefined)?.year ?? new Date().getFullYear(), 'year');
       const ok = markVatPeriodFiled(db, year, quarter);
       if (!ok) return reply.status(404).send({ error: 'Period not found or already filed' });
       return reply.send({ success: true });
@@ -98,13 +106,14 @@ export async function registerBookkeepingRoutes(
   fastify.get(
     '/api/bookkeeping/export/csv',
     async (req: FastifyRequest<{ Querystring: { start?: string; end?: string } }>, reply: FastifyReply) => {
-      const now   = new Date();
-      const start = req.query.start ?? `${now.getFullYear()}-01-01`;
-      const end   = req.query.end   ?? now.toISOString().slice(0, 10);
-      const csv   = exportToCSV(db, start, end);
+      const { start, end } = dateWindow(req.query);
+      const csv = exportToCSV(db, start, end);
+      // Filename parts are request-controlled: strip anything that could close
+      // the quoted string or inject a second header line.
+      const name = `bunqsy-export-${safeFilenamePart(start)}-${safeFilenamePart(end)}.csv`;
       return reply
         .header('Content-Type', 'text/csv; charset=utf-8')
-        .header('Content-Disposition', `attachment; filename="bunqsy-export-${start}-${end}.csv"`)
+        .header('Content-Disposition', `attachment; filename="${name}"`)
         .send(csv);
     },
   );
@@ -113,14 +122,13 @@ export async function registerBookkeepingRoutes(
   fastify.get(
     '/api/bookkeeping/export/mt940',
     async (req: FastifyRequest<{ Querystring: { start?: string; end?: string } }>, reply: FastifyReply) => {
-      const now   = new Date();
-      const start = req.query.start ?? `${now.getFullYear()}-01-01`;
-      const end   = req.query.end   ?? now.toISOString().slice(0, 10);
+      const { start, end } = dateWindow(req.query);
       const iban  = getIBAN();
       const mt940 = exportToMT940(db, start, end, iban);
+      const name = `bunqsy-export-${safeFilenamePart(start)}-${safeFilenamePart(end)}.mt940`;
       return reply
         .header('Content-Type', 'text/plain; charset=utf-8')
-        .header('Content-Disposition', `attachment; filename="bunqsy-export-${start}-${end}.mt940"`)
+        .header('Content-Disposition', `attachment; filename="${name}"`)
         .send(mt940);
     },
   );

@@ -8,6 +8,10 @@ import { offerPatternPromotion } from '../intervention/pattern-promotion.js';
 import { getAccountSummaries } from '../state.js';
 import type { BunqClient } from '../bunq/client.js';
 import type { ScoreLogRow, OracleVote, InterventionRow, TransactionRow } from '@bunqsy/shared';
+import {
+  CardActionBody, ConfirmBody, IdParam, LimitQuery, PositiveIntParam, UuidParam, parseOr400,
+} from '../security/validate.js';
+import { isAuthenticated } from '../security/plugin.js';
 
 // ── Serialisable card summary returned to the frontend ─────────────────────────
 interface CardSummary {
@@ -68,8 +72,8 @@ export async function registerApiRoutes(
       }>,
       reply: FastifyReply,
     ) => {
-      const { planId } = req.params;
-      const action = (req.body as { action?: string } | undefined)?.action ?? 'block';
+      const planId = parseOr400(UuidParam, req.params.planId, 'planId');
+      const { action } = parseOr400(ConfirmBody, req.body ?? {}, 'body');
 
       try {
         const db = getDb();
@@ -103,8 +107,14 @@ export async function registerApiRoutes(
 
         return reply.send({ ok: true });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        return reply.status(400).send({ ok: false, error: message });
+        // bunq's error bodies quote IBANs, account ids and request payloads —
+        // log them, never echo them to the browser.
+        req.log.warn({ err, planId }, 'plan confirm/execute failed');
+        const known = err instanceof Error && err.name === 'StepValidationError';
+        return reply.status(400).send({
+          ok: false,
+          error: known ? err.message : 'Unable to complete this action',
+        });
       }
     },
   );
@@ -113,7 +123,7 @@ export async function registerApiRoutes(
   fastify.post(
     '/api/dismiss/:interventionId',
     async (req: FastifyRequest<{ Params: { interventionId: string } }>, reply: FastifyReply) => {
-      const { interventionId } = req.params;
+      const interventionId = parseOr400(IdParam, req.params.interventionId, 'interventionId');
       const db = getDb();
       resolveIntervention(db, interventionId, 'DISMISSED');
       return reply.send({ ok: true });
@@ -160,7 +170,7 @@ export async function registerApiRoutes(
     '/api/transactions',
     async (req: FastifyRequest<{ Querystring: { limit?: string } }>, reply: FastifyReply) => {
       const db = getDb();
-      const limit = Math.min(parseInt((req.query as { limit?: string }).limit ?? '30', 10), 100);
+      const limit = LimitQuery.parse((req.query as { limit?: string }).limit ?? 30);
       const rows = db
         .prepare(
           `SELECT t.*, j.category AS je_category
@@ -305,7 +315,7 @@ export async function registerApiRoutes(
   });
 
   // ── GET /api/cards — live card list from bunq ─────────────────────────────
-  fastify.get('/api/cards', async (_req: FastifyRequest, reply: FastifyReply) => {
+  fastify.get('/api/cards', async (req: FastifyRequest, reply: FastifyReply) => {
     if (!client) return reply.status(503).send({ error: 'bunq client not available' });
     try {
       const cards = await client.getCards();
@@ -358,7 +368,9 @@ export async function registerApiRoutes(
       return reply.send(summaries);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      return reply.status(503).send({ error: 'Unable to fetch cards from bunq', detail: message });
+      // `message` is bunq's raw error envelope (account ids, request echo).
+      req.log.warn({ err: message }, 'card fetch failed');
+      return reply.status(503).send({ error: 'Unable to fetch cards from bunq' });
     }
   });
 
@@ -372,18 +384,18 @@ export async function registerApiRoutes(
       }>,
       reply: FastifyReply,
     ) => {
-      const { cardId } = req.params;
-      const body = req.body as { cardEndpoint?: string; nameOnCard?: string; lastFourDigits?: string } | undefined;
-      const cardEndpoint   = body?.cardEndpoint   ?? 'card-debit';
-      const nameOnCard     = body?.nameOnCard     ?? 'card';
-      const lastFourDigits = body?.lastFourDigits ?? '****';
+      const id   = parseOr400(PositiveIntParam, req.params.cardId, 'cardId');
+      const body = parseOr400(CardActionBody, req.body ?? {}, 'body');
+      const cardEndpoint   = body.cardEndpoint;
+      const nameOnCard     = body.nameOnCard     ?? 'card';
+      const lastFourDigits = body.lastFourDigits ?? '****';
 
       const plan = await createExecutionPlan(
         [{
           id:          uuid(),
           type:        'CARD_FREEZE',
           description: `Freeze ${nameOnCard} (…${lastFourDigits})`,
-          payload:     { cardId: parseInt(cardId, 10), cardEndpoint },
+          payload:     { cardId: id, cardEndpoint },
         }],
         `Freezing your ${nameOnCard} card ending in ${lastFourDigits}. All new transactions will be blocked until you unfreeze it. This action can be reversed at any time.`,
       );
@@ -401,18 +413,18 @@ export async function registerApiRoutes(
       }>,
       reply: FastifyReply,
     ) => {
-      const { cardId } = req.params;
-      const body = req.body as { cardEndpoint?: string; nameOnCard?: string; lastFourDigits?: string } | undefined;
-      const cardEndpoint   = body?.cardEndpoint   ?? 'card-debit';
-      const nameOnCard     = body?.nameOnCard     ?? 'card';
-      const lastFourDigits = body?.lastFourDigits ?? '****';
+      const id   = parseOr400(PositiveIntParam, req.params.cardId, 'cardId');
+      const body = parseOr400(CardActionBody, req.body ?? {}, 'body');
+      const cardEndpoint   = body.cardEndpoint;
+      const nameOnCard     = body.nameOnCard     ?? 'card';
+      const lastFourDigits = body.lastFourDigits ?? '****';
 
       const plan = await createExecutionPlan(
         [{
           id:          uuid(),
           type:        'CARD_UNFREEZE',
           description: `Unfreeze ${nameOnCard} (…${lastFourDigits})`,
-          payload:     { cardId: parseInt(cardId, 10), cardEndpoint },
+          payload:     { cardId: id, cardEndpoint },
         }],
         `Reactivating your ${nameOnCard} card ending in ${lastFourDigits}. The card will accept transactions again immediately after confirmation.`,
       );
@@ -459,72 +471,89 @@ export async function registerApiRoutes(
   });
 
   // ── GET /api/health — liveness probe for SRE / platform ────────────────────
-  fastify.get('/api/health', async (_req: FastifyRequest, reply: FastifyReply) => {
+  // Public (no token) so a supervisor can probe liveness. Unauthenticated
+  // callers get liveness only — environment, mode and last-activity timestamps
+  // are operational detail that helps someone decide whether to attack this box.
+  fastify.get('/api/health', async (req: FastifyRequest, reply: FastifyReply) => {
     const db = getDb();
     let dbOk = false;
     try { db.prepare('SELECT 1').get(); dbOk = true; } catch { dbOk = false; }
+
+    const base = { status: dbOk ? 'ok' : 'degraded', uptime: Math.round(process.uptime()) };
+    if (!isAuthenticated(req)) return reply.send(base);
+
     const lastScore = db.prepare('SELECT logged_at FROM score_log ORDER BY logged_at DESC LIMIT 1').get() as { logged_at?: string } | undefined;
-    const lastTick = db.prepare('SELECT tick_at FROM tick_log ORDER BY tick_at DESC LIMIT 1').get() as { tick_at?: string } | undefined;
-    const bunqMode = process.env.BUNQ_OFFLINE_MODE === 'true' ? 'offline' : 'live';
+    const lastTick  = db.prepare('SELECT tick_at FROM tick_log ORDER BY tick_at DESC LIMIT 1').get() as { tick_at?: string } | undefined;
     return reply.send({
-      status: dbOk ? 'ok' : 'degraded',
-      uptime: process.uptime(),
+      ...base,
       db: dbOk ? 'ok' : 'error',
-      bunq: bunqMode,
+      bunq: process.env['BUNQ_OFFLINE_MODE'] === 'true' ? 'offline' : 'live',
       lastScore: lastScore?.logged_at ?? null,
       lastTick:  lastTick?.tick_at ?? null,
-      env: process.env.BUNQ_ENV ?? 'sandbox',
+      env: process.env['BUNQ_ENV'] ?? 'sandbox',
     });
   });
 
   // ── POST /api/webhook — bunq event webhook ─────────────────────────────────
+  // Unauthenticated by necessity (bunq cannot present our token), so it is
+  // authenticated by *what bunq can prove*: source IP inside the published CIDR
+  // and an RSA signature over the exact bytes of the body.
   fastify.post('/api/webhook', async (req: FastifyRequest, reply: FastifyReply) => {
-    const remoteIp =
-      (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim()
-      ?? req.socket.remoteAddress
-      ?? '';
-
-    if (!isAllowedOrigin(remoteIp)) {
-      return reply.status(403).send({ error: 'Forbidden — IP not in bunq CIDR range' });
+    // req.ip honours trustProxy, which is off unless the operator owns the proxy.
+    // Reading X-Forwarded-For unconditionally let anyone forge a bunq source IP.
+    if (!isAllowedOrigin(req.ip)) {
+      req.log.warn({ ip: req.ip }, 'webhook rejected: source IP outside bunq CIDR');
+      return reply.status(403).send({ error: 'Forbidden' });
     }
 
-    // Webhook signature verification — PSD2 compliance (always enforced in production,
-    // warn-only in sandbox where header may be absent on simulated calls)
-    try {
-      const sessionRow = getDb().prepare('SELECT server_public_key FROM sessions ORDER BY created_at DESC LIMIT 1').get() as { server_public_key: string } | undefined;
-      if (sessionRow?.server_public_key) {
-        const rawBody = JSON.stringify(req.body ?? {});
-        const headers = req.headers as Record<string, string>;
-        const hasSig = Boolean(headers['x-bunq-client-signature'] || headers['x-bunq-client-signature'.toLowerCase()]);
-        if (hasSig) {
-          const session = { serverPublicKey: sessionRow.server_public_key } as import('../bunq/auth.js').BunqSession;
-          const valid = validateWebhookRequest(rawBody, headers, session);
-          if (!valid) {
-            if (process.env.BUNQ_ENV === 'production') {
-              return reply.status(401).send({ error: 'Invalid webhook signature' });
-            }
-            console.warn('[webhook] Signature invalid in sandbox — allowing (set BUNQ_ENV=production to enforce)');
-          }
-        } else if (process.env.BUNQ_ENV === 'production') {
-          return reply.status(401).send({ error: 'Missing webhook signature' });
-        }
+    const enforce = process.env['BUNQ_ENV'] === 'production'
+      || process.env['WEBHOOK_REQUIRE_SIGNATURE'] === 'true';
+
+    // The signature covers the raw bytes. JSON.stringify(req.body) re-serialises
+    // them (key order, spacing, unicode escapes) and can never reproduce the
+    // signed input — the old check could only ever pass by not running.
+    const rawBody = req.rawBody ?? '';
+    const sessionRow = getDb()
+      .prepare('SELECT server_public_key FROM sessions ORDER BY created_at DESC LIMIT 1')
+      .get() as { server_public_key: string } | undefined;
+
+    let signatureOk = false;
+    if (sessionRow?.server_public_key && rawBody) {
+      try {
+        signatureOk = validateWebhookRequest(
+          rawBody,
+          req.headers as Record<string, string | string[] | undefined>,
+          { serverPublicKey: sessionRow.server_public_key } as import('../bunq/auth.js').BunqSession,
+        );
+      } catch (err) {
+        req.log.warn({ err }, 'webhook signature verification threw');
       }
-    } catch (e) {
-      console.warn('[webhook] Signature check error (non-fatal):', (e as Error).message);
     }
 
-    // Parse the bunq notification payload
+    if (!signatureOk) {
+      if (enforce) {
+        return reply.status(401).send({ error: 'Invalid or missing webhook signature' });
+      }
+      req.log.warn('webhook signature not verified — allowed because BUNQ_ENV is not production');
+    }
+
     // Shape: { NotificationUrl: { category, event_type, object } }
     const body = req.body as { NotificationUrl?: { category?: string; event_type?: string } } | undefined;
-    const category  = body?.NotificationUrl?.category ?? 'UNKNOWN';
-    const eventType = body?.NotificationUrl?.event_type ?? 'UNKNOWN';
+    const rawCategory  = body?.NotificationUrl?.category;
+    const rawEventType = body?.NotificationUrl?.event_type;
 
-    console.log(`[webhook] Received: category=${category} event=${eventType}`);
+    // Never log unsanitised remote strings: they end up in operator terminals
+    // and log aggregators where control characters are interpreted.
+    const clean = (v: unknown): string =>
+      typeof v === 'string' ? v.replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 40) || 'UNKNOWN' : 'UNKNOWN';
+    const category  = clean(rawCategory);
+    const eventType = clean(rawEventType);
 
-    // Trigger an immediate heartbeat tick for payment-relevant events
+    req.log.info({ category, eventType }, 'webhook received');
+
     const TICK_CATEGORIES = new Set(['PAYMENT', 'MUTATION', 'REQUEST', 'SCHEDULE_RESULT']);
     if (TICK_CATEGORIES.has(category) && triggerTick) {
-      // Slight delay so bunq has committed the transaction before we fetch
+      // Slight delay so bunq has committed the transaction before we fetch.
       setTimeout(() => {
         void triggerTick().catch((err: Error) =>
           console.error('[webhook] Triggered tick failed:', err.message),

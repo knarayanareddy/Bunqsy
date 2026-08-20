@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { getDb } from '../memory/db.js';
 import { createExecutionPlan, confirmPlan, executePlan } from '../bunq/execute.js';
+import { assertDemoAllowed } from '../security/demo-guard.js';
 
 // ─── Seed row schema ──────────────────────────────────────────────────────────
 // [id, amount, counterpartyName, description, category, isRecurring(0|1), daysAgo, hour]
@@ -91,9 +92,7 @@ export async function registerDemoRoute(
   getAID?: () => number,
 ): Promise<void> {
   fastify.post('/api/demo/reset', async (_req: FastifyRequest, reply: FastifyReply) => {
-    if (process.env['BUNQ_ENV'] === 'production') {
-      return reply.status(403).send({ error: 'Demo reset is not available in production' });
-    }
+    assertDemoAllowed('Demo reset');
     const db = getDb();
     const AID = getAID?.() ?? 1;
 
@@ -144,6 +143,8 @@ export async function registerDemoRoute(
 
   // ─── Simulate Salary ───
   fastify.post('/api/demo/salary', async (_req, reply) => {
+    // Inserts a fabricated €3500 credit into the ledger.
+    assertDemoAllowed('Salary simulation');
     const db = getDb();
     const AID = getAID?.() ?? 1;
 
@@ -165,9 +166,7 @@ export async function registerDemoRoute(
 
   // ─── Fund sandbox via sugardaddy@bunq.com ───
   fastify.post('/api/demo/fund-sandbox', async (_req: FastifyRequest, reply: FastifyReply) => {
-    if (process.env['BUNQ_ENV'] === 'production') {
-      return reply.status(403).send({ error: 'Sandbox funding is not available in production' });
-    }
+    assertDemoAllowed('Sandbox funding');
 
     const AID = getAID?.() ?? 1;
     const db  = getDb();
@@ -205,6 +204,8 @@ export async function registerDemoRoute(
 
   // ─── Simulate Fraud ───
   fastify.post('/api/demo/fraud', async (_req, reply) => {
+    // Inserts a fabricated suspicious debit into the ledger.
+    assertDemoAllowed('Fraud simulation');
     const db = getDb();
     const AID = getAID?.() ?? 1;
 

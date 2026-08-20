@@ -94,6 +94,8 @@ An intervention fires when `shouldIntervene = true` on any vote **and** aggregat
 
 Supported plan step types: `PAYMENT`, `SAVINGS_TRANSFER`, `DRAFT_PAYMENT`, `CANCEL_DRAFT`, `SANDBOX_FUND`, `CARD_FREEZE`, `CARD_UNFREEZE`, `CREATE_SAVINGS_GOAL`.
 
+Every step is validated twice — at plan creation and again before execution — against a per-type schema (IBAN shape, integer ids, currency allow-list, `MAX_PAYMENT_EUR` ceiling, ≤ 10 steps). **Outbound payments are denied by default** (`VOICE_PAYMENTS_ENABLED=false`): `PAYMENT`/`DRAFT_PAYMENT` can only originate from the LLM planner, whose input is a transcript, so third-party money movement is an explicit opt-in rather than a confirmation click. See [SECURITY.md](SECURITY.md).
+
 ### Dream Mode
 Runs nightly at 02:00 in the user's configured timezone. Executes in a **forked child process** with a 10-minute kill timeout. The worker analyses transaction history, updates pattern confidence scores, generates a DNA card (financial personality snapshot), and produces three actionable suggestions. The worker cannot import `execute.ts`.
 
@@ -305,6 +307,31 @@ SQLite WAL mode. 14 tables; append-only where noted.
 | `pattern_embeddings` | sqlite-vec virtual table (optional) |
 
 ---
+
+## Security
+
+The daemon holds a bunq session key and can move money, so it is treated as a
+privileged local service. Full threat model, control inventory and production
+checklist: **[SECURITY.md](SECURITY.md)**.
+
+The short version for running it locally:
+
+```bash
+npm run dev            # daemon generates .bunqsy-token (0600) on first boot
+```
+
+- The daemon binds `127.0.0.1` by default. Set `HOST` to expose it, and set
+  `BUNQSY_API_TOKEN` when you do.
+- Every endpoint except `/api/health` and `/api/webhook` needs that token. The
+  Vite dev proxy injects it server-side, so **the browser never holds it** —
+  nothing to steal via XSS, nothing to replay from another page.
+- Requests from a browser origin that is not allow-listed are refused (all
+  methods, WebSocket upgrades included), which is what stops another tab from
+  driving your guardian.
+- `npm test` runs a 50-check security suite; `npm audit` should report 0.
+
+If you cloned this repo before the hardening pass, **rotate your bunq API key** —
+a committed SQLite WAL file contained the signing key. SECURITY.md has the steps.
 
 ## Constitutional rules
 
